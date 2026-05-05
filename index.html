@@ -31,8 +31,9 @@
         <nav class="nav" aria-label="Primary">
           <a href="index.html#shop">Shop</a>
           <a href="about.html">About</a>
-          <button type="button" class="ghost auth-btn" id="my-orders-open" hidden>My Orders Dashboard</button>
-          <button type="button" class="ghost auth-btn" id="admin-dashboard-open" hidden>Admin Dashboard</button>
+          <a href="user-orders.html">My Orders</a>
+          <a href="admin-orders.html">Admin Orders</a>
+          <a href="rider-orders.html">Rider Orders</a>
           <button type="button" class="ghost auth-btn" id="auth-open">Login</button>
           <button type="button" class="ghost auth-btn" id="auth-logout" hidden>Logout</button>
           <span class="auth-status small muted" id="auth-status">Guest</span>
@@ -49,9 +50,9 @@
       <section class="hero">
         <div class="hero-content">
           <p class="eyebrow">Fresh picks • Hand-arranged • Ready when you are</p>
-          <h1>Bouquets that feel like a sweet surprise.</h1>
+          <h1>Bouquets that feel like a sweet surprise</h1>
           <p class="lede">
-            Whether it is a birthday, thank-you, or just-because day, find a bouquet that speaks for you. Browse the shop, add favorites to your cart, and check out when you are ready—quick, clear, and crafted with care.
+            Because any day is the perfect day to give flowers, surprise your loved ones with something meaningful. Whether it’s a birthday, a thank-you, or just because, find a bouquet that speaks for you. Browse, choose your favorites, and check out with ease—crafted with care every step of the way.
           </p>
           <a class="cta" href="#shop">Browse bouquets</a>
         </div>
@@ -67,16 +68,24 @@
 
       <section id="story" class="story">
         <div class="story-inner">
-          <h2>Celebrate the everyday</h2>
+          <h2>Celebrate the Everyday</h2>
           <p>
-            Sweet Surprise Flowershop brings together bright daisies, thoughtful bundles like our Sophie bouquet, and sweet add-ons so you can gift with confidence.
-            Every arrangement is chosen to look lovely on the doorstep and warm in the hands of someone you care about. Explore the lineup, tailor stem counts where it matters,
-            and let us help you send something unforgettable—starting right here on this page.
+            At Sweet Surprise Flowershop, we believe that any day is the perfect day to give flowers. From bright daisies to thoughtfully arranged bundles like our Sophie bouquet, each piece is designed to bring joy and create meaningful moments.
+          </p>
+          <p>
+            Surprise your loved ones with flowers that feel as warm in their hands as they look on their doorstep. Explore our collection, customize your stems where it matters, and let us help you send something truly unforgettable—because sometimes, the sweetest surprises come without a reason. 💐
           </p>
         </div>
       </section>
 
       <section id="shop" class="shop">
+        <p class="banner-lead">Surprise your loved ones with something beautiful today.</p>
+        <div class="discount-carousel" id="discount-carousel" aria-label="Discount banners">
+          <button type="button" class="gallery-nav prev" id="discount-prev" aria-label="Previous banner">‹</button>
+          <img src="" alt="" id="discount-image" loading="lazy" />
+          <button type="button" class="gallery-nav next" id="discount-next" aria-label="Next banner">›</button>
+          <div class="gallery-dots" id="discount-dots"></div>
+        </div>
         <div class="shop-head">
           <h2>Featured arrangements</h2>
           <p class="muted">Availability and delivery timing can be confirmed at checkout—we will match you to the best slot.</p>
@@ -281,6 +290,18 @@
 
     <footer class="site-footer">
       <p>© <span id="year"></span> Sweet Surprise Flowershop</p>
+      <p class="footer-follow-text">Follow us or contact us on social media</p>
+      <div class="social-links">
+        <a href="https://www.facebook.com/share/1CLKZHeBgJ/?mibextid=wwXIfr" target="_blank" rel="noopener noreferrer" aria-label="Facebook">
+          <img src="assets/icons/facebook.png" alt="Facebook" />
+        </a>
+        <a href="#" aria-label="Social link 2">
+          <img src="assets/icons/icon-2.png" alt="Social icon" />
+        </a>
+        <a href="#" aria-label="Social link 3">
+          <img src="assets/icons/icon-3.png" alt="Social icon" />
+        </a>
+      </div>
     </footer>
     <div id="app-notice" class="app-notice" hidden aria-live="polite"></div>
 
@@ -351,6 +372,21 @@
       <div class="checkout-actions">
         <button type="button" class="primary" id="receipt-open-orders">Open My Orders Dashboard</button>
         <button type="button" class="ghost" id="receipt-close">Close</button>
+      </div>
+    </div>
+
+    <div class="dialog-backdrop" id="gcash-backdrop" hidden></div>
+    <div class="dialog" id="gcash-dialog" role="dialog" aria-modal="true" aria-labelledby="gcash-title" hidden>
+      <h2 id="gcash-title">GCash Payment</h2>
+      <p class="muted small">Scan the QR code for payment and click Done when finished.</p>
+      <div class="receipt-content">
+        <p class="small"><strong>GCash Number:</strong> 0912 345 6789</p>
+        <p class="small muted">Use your order reference as note. We will review and update your order dashboard.</p>
+        <img id="gcash-qr-image" src="assets/gcash-qr/gcash-qr.jpg" alt="GCash QR" style="width: 180px; height: 180px; object-fit: cover; border-radius: 8px;" />
+      </div>
+      <div class="checkout-actions">
+        <button type="button" class="primary" id="gcash-done-btn">Done</button>
+        <button type="button" class="ghost" id="gcash-cancel-btn">Cancel Order</button>
       </div>
     </div>
 

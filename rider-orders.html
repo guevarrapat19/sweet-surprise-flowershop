@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Rider Orders - Sweet Surprise</title>
+    <link rel="stylesheet" href="css/styles.css" />
+  </head>
+  <body data-page="rider">
+    <header class="site-header">
+      <div class="inner">
+        <a class="brand" href="index.html"><span class="brand-word">Sweet Surprise</span></a>
+        <nav class="nav">
+          <a href="index.html">Shop</a>
+          <a href="user-orders.html">My Orders</a>
+          <a href="admin-orders.html">Admin Orders</a>
+          <a href="rider-orders.html" aria-current="page">Rider Orders</a>
+          <button type="button" class="ghost auth-btn" id="logout-btn">Logout</button>
+          <span class="auth-status small muted" id="user-email">...</span>
+        </nav>
+      </div>
+    </header>
+    <main class="shop">
+      <div class="shop-head">
+        <h2>Rider Dashboard</h2>
+        <p class="muted">Update delivery progress and successful COD transactions.</p>
+      </div>
+      <p class="small" id="page-notice" hidden></p>
+      <div id="orders-list" class="dashboard-list"></div>
+    </main>
+
+    <script>
+      window.SSF_FIREBASE_CONFIG = {
+        apiKey: "AIzaSyAD_IuSJyauYTW6m13UQHreYdeA_ypbx9k",
+        authDomain: "sweet-surprise-website.firebaseapp.com",
+        databaseURL: "https://sweet-surprise-website-default-rtdb.asia-southeast1.firebasedatabase.app",
+        projectId: "sweet-surprise-website",
+        storageBucket: "sweet-surprise-website.firebasestorage.app",
+        messagingSenderId: "189550685416",
+        appId: "1:189550685416:web:6df2d9861bca92ce4aad5d",
+        measurementId: "G-8LL1JE9CPQ"
+      };
+    </script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
+    <script src="js/orders-pages.js"></script>
+  </body>
+</html>

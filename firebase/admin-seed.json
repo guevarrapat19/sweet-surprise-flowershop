@@ -7,6 +7,11 @@
     "mianongalilee@gmail.com",
     "almarionestine@gmail.com"
   ],
+  "riderEmails": [
+    "rider@sweetsurprise.com",
+    "rainierdelossantos@gmail.com",
+    "jefferytangcuangco@gmail.com"
+  ],
   "profilesToSeedAfterAuthCreate": {
     "replaceWithUid1": {
       "uid": "replaceWithUid1",
@@ -21,6 +26,27 @@
       "email": "almarionestine@gmail.com",
       "phone": "",
       "role": "admin"
+    },
+    "replaceWithRiderUid1": {
+      "uid": "replaceWithRiderUid1",
+      "fullName": "Demo Rider 1",
+      "email": "rider@sweetsurprise.com",
+      "phone": "",
+      "role": "rider"
+    },
+    "omNJtLwS7dbKwjMrVyTTFjDfPfI3": {
+      "uid": "omNJtLwS7dbKwjMrVyTTFjDfPfI3",
+      "fullName": "Rainier Delos Santos",
+      "email": "rainierdelossantos@gmail.com",
+      "phone": "",
+      "role": "rider"
+    },
+    "NERXzX5W4afAaG1f6Ul4Kae0JUh1": {
+      "uid": "NERXzX5W4afAaG1f6Ul4Kae0JUh1",
+      "fullName": "Jeffery Tangcuangco",
+      "email": "jefferytangcuangco@gmail.com",
+      "phone": "",
+      "role": "rider"
     }
   }
 }

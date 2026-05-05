@@ -12,6 +12,7 @@
   var AUTH_KEY = "ssf-auth-local-v1";
   var FIREBASE_CONFIG = window.SSF_FIREBASE_CONFIG || null;
   var ADMIN_EMAILS = ["mianongalilee@gmail.com", "almarionestine@gmail.com"];
+  var RIDER_EMAILS = ["rider@sweetsurprise.com", "rainierdelossantos@gmail.com", "jefferytangcuangco@gmail.com"];
   var ADMIN_PASSWORD = "admin123";
   var firebaseReady = false;
   var fbAuth = null;
@@ -21,8 +22,14 @@
   var noticeTimer = null;
   var ORDER_STATUSES = {
     PENDING: "pending",
+    AWAITING_PAYMENT_REVIEW: "awaiting_payment_review",
     APPROVED: "approved",
+    RIDER_ASSIGNED: "rider_assigned",
     OUT_FOR_DELIVERY: "out_for_delivery",
+    PAID_DELIVERY_SUCCESS: "paid_delivery_success",
+    RECEIVED_BY_CUSTOMER: "received_by_customer",
+    COMPLETED: "completed",
+    CANCELLED: "cancelled",
     DELIVERED: "delivered",
   };
   var PROMO_CODES = {
@@ -45,8 +52,14 @@
   }
 
   function prettyStatus(status) {
+    if (status === ORDER_STATUSES.AWAITING_PAYMENT_REVIEW) return "Awaiting payment review";
     if (status === ORDER_STATUSES.APPROVED) return "Approved";
+    if (status === ORDER_STATUSES.RIDER_ASSIGNED) return "Rider assigned";
     if (status === ORDER_STATUSES.OUT_FOR_DELIVERY) return "Out for delivery";
+    if (status === ORDER_STATUSES.PAID_DELIVERY_SUCCESS) return "Paid delivery success";
+    if (status === ORDER_STATUSES.RECEIVED_BY_CUSTOMER) return "Received by customer";
+    if (status === ORDER_STATUSES.COMPLETED) return "Completed";
+    if (status === ORDER_STATUSES.CANCELLED) return "Cancelled";
     if (status === ORDER_STATUSES.DELIVERED) return "Delivered";
     return "Pending approval";
   }
@@ -54,7 +67,8 @@
   function statusClass(status) {
     if (status === ORDER_STATUSES.APPROVED) return "status-approved";
     if (status === ORDER_STATUSES.OUT_FOR_DELIVERY) return "status-out-for-delivery";
-    if (status === ORDER_STATUSES.DELIVERED) return "status-approved";
+    if (status === ORDER_STATUSES.COMPLETED || status === ORDER_STATUSES.RECEIVED_BY_CUSTOMER || status === ORDER_STATUSES.DELIVERED)
+      return "status-approved";
     return "status-pending";
   }
 
@@ -96,6 +110,17 @@
   function isAdminEmail(email) {
     var e = String(email || "").toLowerCase();
     return ADMIN_EMAILS.indexOf(e) !== -1;
+  }
+
+  function isRiderEmail(email) {
+    var e = String(email || "").toLowerCase();
+    return RIDER_EMAILS.indexOf(e) !== -1;
+  }
+
+  function getRoleFromEmail(email) {
+    if (isAdminEmail(email)) return "admin";
+    if (isRiderEmail(email)) return "rider";
+    return "user";
   }
 
   /** @type {Array<Object>} */
@@ -622,7 +647,7 @@
         fullName: pack.fullName,
         email: pack.email,
         phone: pack.phone,
-        role: isAdminEmail(pack.email) ? "admin" : "user",
+        role: getRoleFromEmail(pack.email),
       };
       await fbDb.ref("profiles/" + cred.user.uid).set(profile);
       currentUser = profile;
@@ -632,7 +657,7 @@
         fullName: pack.fullName,
         email: pack.email,
         phone: pack.phone,
-        role: isAdminEmail(pack.email) ? "admin" : "user",
+        role: getRoleFromEmail(pack.email),
       };
       writeLocalAuth(currentUser);
     }
@@ -662,7 +687,7 @@
           fullName: cred.user.displayName || "",
           email: cred.user.email || pack.email,
           phone: "",
-          role: isAdminEmail(cred.user.email || pack.email) ? "admin" : "user",
+          role: getRoleFromEmail(cred.user.email || pack.email),
           createdAt: new Date().toISOString(),
         };
         await fbDb.ref("profiles/" + cred.user.uid).set(profile);
@@ -672,7 +697,7 @@
         fullName: profile.fullName || cred.user.displayName || "",
         email: cred.user.email || pack.email,
         phone: profile.phone || "",
-        role: profile.role || (isAdminEmail(cred.user.email || pack.email) ? "admin" : "user"),
+        role: profile.role || getRoleFromEmail(cred.user.email || pack.email),
       };
     } else {
       currentUser = readLocalAuth();
@@ -744,7 +769,7 @@
                 fullName: user.displayName || "",
                 email: user.email || "",
                 phone: "",
-                role: isAdminEmail(user.email) ? "admin" : "user",
+                role: getRoleFromEmail(user.email),
                 createdAt: new Date().toISOString(),
               };
               await fbDb.ref("profiles/" + user.uid).set(profile);
@@ -754,7 +779,7 @@
               fullName: profile.fullName || user.displayName || "",
               email: user.email || "",
               phone: profile.phone || "",
-              role: profile.role || (isAdminEmail(user.email) ? "admin" : "user"),
+              role: profile.role || getRoleFromEmail(user.email),
             };
             updateAuthUi();
           });
@@ -796,6 +821,53 @@
       timer = setInterval(function () {
         render(index + 1);
       }, 2200);
+    }
+    function stop() {
+      if (!timer) return;
+      clearInterval(timer);
+      timer = null;
+    }
+    prevBtn.addEventListener("click", function () {
+      render(index - 1);
+    });
+    nextBtn.addEventListener("click", function () {
+      render(index + 1);
+    });
+    imageEl.addEventListener("mouseenter", stop);
+    imageEl.addEventListener("mouseleave", start);
+    render(0);
+    start();
+  }
+
+  function initDiscountCarousel() {
+    var imageEl = document.getElementById("discount-image");
+    var dotsEl = document.getElementById("discount-dots");
+    var prevBtn = document.getElementById("discount-prev");
+    var nextBtn = document.getElementById("discount-next");
+    if (!imageEl || !dotsEl || !prevBtn || !nextBtn) return;
+    var slides = [
+      { src: "assets/images/discount-1.jpg", alt: "Discount banner 1" },
+      { src: "assets/images/discount-2.jpg", alt: "Discount banner 2" },
+      { src: "assets/images/discount-3.jpg", alt: "Discount banner 3" },
+    ];
+    var index = 0;
+    var timer = null;
+    function render(i) {
+      index = (i + slides.length) % slides.length;
+      imageEl.src = slides[index].src;
+      imageEl.alt = slides[index].alt;
+      dotsEl.innerHTML = "";
+      slides.forEach(function (_, j) {
+        var d = document.createElement("span");
+        d.className = "gallery-dot" + (j === index ? " active" : "");
+        dotsEl.appendChild(d);
+      });
+    }
+    function start() {
+      if (timer || slides.length < 2) return;
+      timer = setInterval(function () {
+        render(index + 1);
+      }, 2600);
     }
     function stop() {
       if (!timer) return;
@@ -1269,11 +1341,24 @@
 
       var provinceLine = ncr ? "National Capital Region" : selectLabel(selProv);
 
+      if (pay === "gcash") {
+        var gcashResult = await runGcashDemoTimer();
+        if (gcashResult === "cancel") {
+          notify("error", "Order cancelled before payment confirmation.");
+          return;
+        }
+      }
+
       var snapshot = {
         orderRef: orderRef,
         placedAt: new Date().toISOString(),
-        status: ORDER_STATUSES.PENDING,
-        statusHistory: [{ status: ORDER_STATUSES.PENDING, at: new Date().toISOString() }],
+        status: pay === "gcash" ? ORDER_STATUSES.AWAITING_PAYMENT_REVIEW : ORDER_STATUSES.PENDING,
+        statusHistory: [
+          {
+            status: pay === "gcash" ? ORDER_STATUSES.AWAITING_PAYMENT_REVIEW : ORDER_STATUSES.PENDING,
+            at: new Date().toISOString(),
+          },
+        ],
         account: currentUser
           ? {
               uid: currentUser.uid || "",
@@ -1318,6 +1403,10 @@
         localStorage.setItem("ssf-orders-demo", JSON.stringify(prev));
       } catch (e) {}
 
+      if (pay === "gcash") {
+        alert("Payment submitted. Please wait for owner/admin payment confirmation. Updates will appear in your order dashboard.");
+      }
+
       var follow = paymentFollowUp(pay, orderRef, grandStr);
       notify("success", "Order placed. " + follow);
       clearCart();
@@ -1353,6 +1442,41 @@
     var dialog = document.getElementById("receipt-dialog");
     if (backdrop) backdrop.hidden = true;
     if (dialog) dialog.hidden = true;
+  }
+
+  function runGcashDemoTimer() {
+    return new Promise(function (resolve) {
+      var backdrop = document.getElementById("gcash-backdrop");
+      var dialog = document.getElementById("gcash-dialog");
+      var doneBtn = document.getElementById("gcash-done-btn");
+      var cancelBtn = document.getElementById("gcash-cancel-btn");
+      var qrImage = document.getElementById("gcash-qr-image");
+      if (!backdrop || !dialog || !doneBtn || !cancelBtn) {
+        resolve();
+        return;
+      }
+      var settled = false;
+      if (qrImage) qrImage.src = "assets/gcash-qr/gcash-qr.jpg";
+      backdrop.hidden = false;
+      dialog.hidden = false;
+      function finish(state) {
+        if (settled) return;
+        settled = true;
+        doneBtn.removeEventListener("click", onDone);
+        cancelBtn.removeEventListener("click", onCancel);
+        dialog.hidden = true;
+        backdrop.hidden = true;
+        resolve(state);
+      }
+      function onDone() {
+        finish("done");
+      }
+      function onCancel() {
+        finish("cancel");
+      }
+      doneBtn.addEventListener("click", onDone);
+      cancelBtn.addEventListener("click", onCancel);
+    });
   }
 
   function openReceiptDialog(snapshot, feePack) {
@@ -1886,14 +2010,12 @@
     var closeBtn = document.getElementById("receipt-close");
     var backdrop = document.getElementById("receipt-backdrop");
     var openOrdersBtn = document.getElementById("receipt-open-orders");
-    var mySection = document.getElementById("my-orders-dashboard");
     if (closeBtn) closeBtn.addEventListener("click", closeReceiptDialog);
     if (backdrop) backdrop.addEventListener("click", closeReceiptDialog);
     if (openOrdersBtn) {
       openOrdersBtn.addEventListener("click", function () {
         closeReceiptDialog();
-        setSectionVisible(mySection, true);
-        loadUserOrders();
+        window.location.href = "user-orders.html";
       });
     }
   }
@@ -1907,6 +2029,7 @@
   enforceNumericInput(document);
   loadProductsFromRealtimeDb().then(function () {
     initShowcaseCarousel();
+    initDiscountCarousel();
     if (document.getElementById("products") && document.getElementById("product-card-template")) {
       renderProducts();
     }
