@@ -597,20 +597,20 @@
     var els = getAuthFormEls();
     if (!els.status) return;
     var logged = !!(currentUser && currentUser.email);
-    var myOrdersBtn = document.getElementById("my-orders-open");
-    var adminBtn = document.getElementById("admin-dashboard-open");
-    var myOrdersSection = document.getElementById("my-orders-dashboard");
-    var adminSection = document.getElementById("admin-dashboard");
+    var ordersLink = document.getElementById("nav-orders-link");
+    var adminLink = document.getElementById("nav-admin-link");
+    var riderLink = document.getElementById("nav-rider-link");
+    var role = logged && currentUser ? currentUser.role : "user";
     els.status.textContent = logged ? currentUser.email : "Guest";
     if (els.openBtn) els.openBtn.hidden = logged;
     if (els.logoutBtn) els.logoutBtn.hidden = !logged;
     if (els.adminPill) els.adminPill.hidden = !(logged && currentUser.role === "admin");
-    if (myOrdersBtn) myOrdersBtn.hidden = !logged;
-    if (adminBtn) adminBtn.hidden = !(logged && currentUser.role === "admin");
-    if (!logged) {
-      if (myOrdersSection) myOrdersSection.hidden = true;
-      if (adminSection) adminSection.hidden = true;
+    if (ordersLink) {
+      ordersLink.hidden = !logged;
+      ordersLink.href = role === "admin" ? "admin-orders.html" : role === "rider" ? "rider-orders.html" : "user-orders.html";
     }
+    if (adminLink) adminLink.hidden = true;
+    if (riderLink) riderLink.hidden = true;
     applyCheckoutProfile();
   }
 

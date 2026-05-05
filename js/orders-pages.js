@@ -302,14 +302,31 @@
   function guardRole() {
     if (!currentUser) return;
     var role = currentUser.role || roleByEmail(currentUser.email);
-    if (currentPage === "admin" && role !== "admin") notify("Admin account required.");
-    if (currentPage === "rider" && role !== "rider") notify("Rider account required.");
+    if (currentPage === "admin" && role !== "admin") {
+      alert("Admin account required.");
+      location.href = "user-orders.html";
+      return;
+    }
+    if (currentPage === "rider" && role !== "rider") {
+      alert("Rider account required.");
+      location.href = "user-orders.html";
+    }
   }
 
   function bindTopbar() {
     var emailEl = document.getElementById("user-email");
     var logoutBtn = document.getElementById("logout-btn");
+    var ordersLink = document.getElementById("nav-orders-link");
+    var adminLink = document.getElementById("nav-admin-link");
+    var riderLink = document.getElementById("nav-rider-link");
+    var role = currentUser ? currentUser.role || roleByEmail(currentUser.email) : "user";
     if (emailEl && currentUser) emailEl.textContent = currentUser.email || "Logged in";
+    if (ordersLink) {
+      ordersLink.hidden = !currentUser;
+      ordersLink.href = role === "admin" ? "admin-orders.html" : role === "rider" ? "rider-orders.html" : "user-orders.html";
+    }
+    if (adminLink) adminLink.hidden = true;
+    if (riderLink) riderLink.hidden = true;
     if (logoutBtn) {
       logoutBtn.addEventListener("click", function () {
         fbAuth.signOut().then(function () {

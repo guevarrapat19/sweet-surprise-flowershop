@@ -31,9 +31,9 @@
         <nav class="nav" aria-label="Primary">
           <a href="index.html#shop">Shop</a>
           <a href="about.html">About</a>
-          <a href="user-orders.html">My Orders</a>
-          <a href="admin-orders.html">Admin Orders</a>
-          <a href="rider-orders.html">Rider Orders</a>
+          <a href="user-orders.html" id="nav-orders-link" hidden>Orders</a>
+          <a href="admin-orders.html" id="nav-admin-link" hidden>Admin</a>
+          <a href="rider-orders.html" id="nav-rider-link" hidden>Rider</a>
           <button type="button" class="ghost auth-btn" id="auth-open">Login</button>
           <button type="button" class="ghost auth-btn" id="auth-logout" hidden>Logout</button>
           <span class="auth-status small muted" id="auth-status">Guest</span>
@@ -375,7 +375,7 @@
       <p class="muted small">Thank you for ordering. Please wait for confirmation from our team.</p>
       <div id="receipt-content" class="receipt-content"></div>
       <div class="checkout-actions">
-        <button type="button" class="primary" id="receipt-open-orders">Open My Orders Dashboard</button>
+        <button type="button" class="primary" id="receipt-open-orders">Open Orders</button>
         <button type="button" class="ghost" id="receipt-close">Close</button>
       </div>
     </div>

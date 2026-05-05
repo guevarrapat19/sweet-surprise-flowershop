@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Admin Orders - Sweet Surprise</title>
+    <title>Orders - Sweet Surprise</title>
     <link rel="stylesheet" href="css/styles.css" />
   </head>
   <body data-page="admin">
@@ -12,9 +12,9 @@
         <a class="brand" href="index.html"><span class="brand-word">Sweet Surprise</span></a>
         <nav class="nav">
           <a href="index.html">Shop</a>
-          <a href="user-orders.html">My Orders</a>
-          <a href="admin-orders.html" aria-current="page">Admin Orders</a>
-          <a href="rider-orders.html">Rider Orders</a>
+          <a href="user-orders.html" id="nav-orders-link" hidden>Orders</a>
+          <a href="admin-orders.html" aria-current="page" id="nav-admin-link" hidden>Admin</a>
+          <a href="rider-orders.html" id="nav-rider-link" hidden>Rider</a>
           <button type="button" class="ghost auth-btn" id="logout-btn">Logout</button>
           <span class="auth-status small muted" id="user-email">...</span>
         </nav>
@@ -22,7 +22,7 @@
     </header>
     <main class="shop">
       <div class="shop-head">
-        <h2>Admin Orders Dashboard</h2>
+        <h2>Orders</h2>
         <p class="muted">Approve payments, assign riders, and close completed orders.</p>
       </div>
       <p class="small" id="page-notice" hidden></p>
