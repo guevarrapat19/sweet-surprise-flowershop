@@ -583,6 +583,7 @@
     if (!els.status) return;
     var logged = !!(currentUser && currentUser.email);
     var ordersLink = document.getElementById("nav-orders-link");
+    var profileLink = document.getElementById("nav-profile-link");
     var adminLink = document.getElementById("nav-admin-link");
     var riderLink = document.getElementById("nav-rider-link");
     var role = logged && currentUser ? currentUser.role : "user";
@@ -593,7 +594,9 @@
     if (ordersLink) {
       ordersLink.hidden = !logged;
       ordersLink.href = role === "admin" ? "admin-orders.html" : role === "rider" ? "rider-orders.html" : "user-orders.html";
+      ordersLink.textContent = role === "admin" ? "Dashboard" : "Orders";
     }
+    if (profileLink) profileLink.hidden = !logged;
     if (adminLink) adminLink.hidden = true;
     if (riderLink) riderLink.hidden = true;
     applyCheckoutProfile();
@@ -1506,7 +1509,7 @@
         return;
       }
       var settled = false;
-      if (qrImage) qrImage.src = "assets/gcash-qr/gcash-qr.jpg";
+      if (qrImage) qrImage.src = "assets/gcash-qr/qr.png";
       backdrop.hidden = false;
       dialog.hidden = false;
       function finish(state) {

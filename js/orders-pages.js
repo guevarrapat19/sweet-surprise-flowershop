@@ -21,6 +21,7 @@
   var fbDb = null;
   var currentUser = null;
   var currentPage = document.body.getAttribute("data-page") || "";
+  var RIDER_ACTIVE_FIELD = "active";
 
   function formatPHP(n) {
     return "₱" + Number(n || 0).toLocaleString("en-PH");
@@ -40,6 +41,12 @@
       delivered: "Delivered",
     };
     return map[s] || s || "Pending";
+  }
+
+  function statusClass(s) {
+    if (s === ORDER_STATUSES.APPROVED || s === ORDER_STATUSES.COMPLETED || s === ORDER_STATUSES.PAID_DELIVERY_SUCCESS) return "status-approved";
+    if (s === ORDER_STATUSES.OUT_FOR_DELIVERY || s === ORDER_STATUSES.DELIVERED || s === ORDER_STATUSES.RIDER_ASSIGNED) return "status-out-for-delivery";
+    return "status-pending";
   }
 
   function roleByEmail(email) {
@@ -64,16 +71,39 @@
     el.hidden = !msg;
   }
 
+  function normalizeProductRecord(id, raw) {
+    var rec = Object.assign(
+      {
+        id: id,
+        title: "",
+        description: "",
+        price: 0,
+        image: "",
+        hidden: false,
+        outOfStock: false,
+        isDeleted: false,
+      },
+      raw || {}
+    );
+    rec.price = Number(rec.price || 0);
+    return rec;
+  }
+
   function rowHtml(o) {
+    var customerName = (o.customer && o.customer.name) || "N/A";
+    var customerEmail = (o.customer && o.customer.email) || "";
     return (
       '<article class="order-card">' +
       '<div class="order-card-top"><strong>' +
       o.orderRef +
-      "</strong><span class='status-pill status-pending'>" +
+      "</strong><span class='status-pill " +
+      statusClass(o.status) +
+      "'>" +
       prettyStatus(o.status) +
       "</span></div>" +
       "<p class='order-meta muted small'>Customer: " +
-      ((o.customer && o.customer.name) || "N/A") +
+      customerName +
+      (customerEmail ? " (" + customerEmail + ")" : "") +
       " • Payment: " +
       String(o.payment || "cod").toUpperCase() +
       " • Total: " +
@@ -91,11 +121,127 @@
       Object.keys(raw || {}).forEach(function (uid) {
         var p = raw[uid];
         if (p && (p.role === "rider" || roleByEmail(p.email) === "rider")) {
-          riders.push({ uid: uid, name: p.fullName || p.email || uid });
+          var active = p[RIDER_ACTIVE_FIELD] !== false;
+          if (active) {
+            riders.push({ uid: uid, name: p.fullName || p.email || uid, email: p.email || "" });
+          }
         }
       });
-    } catch (e) {}
+    } catch (e) {
+      notify("Failed to load riders: " + (e && e.message ? e.message : "Unknown error"));
+    }
     return riders;
+  }
+
+  async function loadRiderAdminPanel() {
+    if (currentPage !== "admin") return;
+    var host = document.getElementById("rider-admin-list");
+    var form = document.getElementById("rider-admin-form");
+    if (!host) return;
+    if (form && !form._ssfBound) {
+      form._ssfBound = true;
+      form.addEventListener("submit", async function (ev) {
+        ev.preventDefault();
+        var data = new FormData(form);
+        var email = String(data.get("email") || "").trim().toLowerCase();
+        if (!email) {
+          notify("Rider email is required.");
+          return;
+        }
+        try {
+          var snapAll = await fbDb.ref("profiles").get();
+          var rawAll = snapAll.exists() ? snapAll.val() : {};
+          var targetUid = null;
+          Object.keys(rawAll || {}).forEach(function (uid) {
+            var p = rawAll[uid] || {};
+            if (!targetUid && String(p.email || "").toLowerCase() === email) {
+              targetUid = uid;
+            }
+          });
+          if (!targetUid) {
+            notify("No account with that email yet. Ask the rider to register first, then try again.");
+            return;
+          }
+          await fbDb
+            .ref("profiles/" + targetUid)
+            .update({ role: "rider", active: true, updatedAt: new Date().toISOString() });
+          notify("Rider role added/updated.");
+          loadRiderAdminPanel();
+        } catch (e) {
+          notify("Failed to add rider: " + (e && e.message ? e.message : "Unknown error"));
+        }
+      });
+    }
+    try {
+      var snap = await fbDb.ref("profiles").get();
+      var raw = snap.exists() ? snap.val() : {};
+      var riders = Object.keys(raw || [])
+        .map(function (uid) {
+          var p = raw[uid] || {};
+          return {
+            uid: uid,
+            role: p.role || roleByEmail(p.email || ""),
+            name: p.fullName || "",
+            email: p.email || "",
+            active: p[RIDER_ACTIVE_FIELD] !== false,
+          };
+        })
+        .filter(function (r) {
+          return r.role === "rider";
+        });
+      if (!riders.length) {
+        host.innerHTML = '<p class="muted small">No rider profiles found.</p>';
+        return;
+      }
+      host.innerHTML = riders
+        .map(function (r) {
+          return (
+            '<article class="order-card">' +
+            '<div class="order-card-top"><strong>' +
+            (r.name || r.email || r.uid) +
+            "</strong><span class='status-pill " +
+            (r.active ? "status-approved'>Active" : "status-pending'>Inactive") +
+            "</span></div>" +
+            "<p class='order-meta muted small'>" +
+            (r.email || "No email") +
+            "</p>" +
+            '<div class="order-actions">' +
+            '<button class="ghost js-rider-toggle" data-uid="' +
+            r.uid +
+            '" data-next="' +
+            (r.active ? "0" : "1") +
+            '">' +
+            (r.active ? "Deactivate" : "Activate") +
+            "</button>" +
+            '<button class="ghost js-rider-remove" data-uid="' +
+            r.uid +
+            '">Remove rider role</button>' +
+            "</div></article>"
+          );
+        })
+        .join("");
+
+      host.querySelectorAll(".js-rider-toggle").forEach(function (btn) {
+        btn.addEventListener("click", async function () {
+          var uid = btn.getAttribute("data-uid");
+          var next = btn.getAttribute("data-next") === "1";
+          await fbDb.ref("profiles/" + uid + "/" + RIDER_ACTIVE_FIELD).set(next);
+          notify("Rider status updated.");
+          loadRiderAdminPanel();
+        });
+      });
+      host.querySelectorAll(".js-rider-remove").forEach(function (btn) {
+        btn.addEventListener("click", async function () {
+          var uid = btn.getAttribute("data-uid");
+          if (!confirm("Remove rider role for this account?")) return;
+          await fbDb.ref("profiles/" + uid).update({ role: "user", active: true, updatedAt: new Date().toISOString() });
+          notify("Rider role removed.");
+          loadRiderAdminPanel();
+        });
+      });
+    } catch (e) {
+      notify("Failed to load rider manager: " + (e && e.message ? e.message : "Unknown error"));
+    }
   }
 
   async function updateOrderStatus(order, nextStatus, extraPatch) {
@@ -171,8 +317,14 @@
   async function loadAdminOrders() {
     var host = document.getElementById("orders-list");
     if (!host) return;
-    var snap = await fbDb.ref("orders_by_ref").get();
-    var raw = snap.exists() ? snap.val() : {};
+    var raw = {};
+    try {
+      var snap = await fbDb.ref("orders_by_ref").get();
+      raw = snap.exists() ? snap.val() : {};
+    } catch (e) {
+      notify("Failed to load admin orders: " + (e && e.message ? e.message : "Unknown error"));
+      return;
+    }
     var orders = Object.keys(raw || {}).map(function (k) {
       return raw[k];
     });
@@ -252,13 +404,20 @@
         loadAdminOrders();
       });
     });
+    loadRiderAdminPanel();
   }
 
   async function loadRiderOrders() {
     var host = document.getElementById("orders-list");
     if (!host || !currentUser) return;
-    var snap = await fbDb.ref("orders_by_ref").get();
-    var raw = snap.exists() ? snap.val() : {};
+    var raw = {};
+    try {
+      var snap = await fbDb.ref("orders_by_ref").get();
+      raw = snap.exists() ? snap.val() : {};
+    } catch (e) {
+      notify("Failed to load rider orders: " + (e && e.message ? e.message : "Unknown error"));
+      return;
+    }
     var orders = Object.keys(raw || {})
       .map(function (k) {
         return raw[k];
@@ -317,6 +476,7 @@
     var emailEl = document.getElementById("user-email");
     var logoutBtn = document.getElementById("logout-btn");
     var ordersLink = document.getElementById("nav-orders-link");
+    var profileLink = document.getElementById("nav-profile-link");
     var adminLink = document.getElementById("nav-admin-link");
     var riderLink = document.getElementById("nav-rider-link");
     var role = currentUser ? currentUser.role || roleByEmail(currentUser.email) : "user";
@@ -325,6 +485,7 @@
       ordersLink.hidden = !currentUser;
       ordersLink.href = role === "admin" ? "admin-orders.html" : role === "rider" ? "rider-orders.html" : "user-orders.html";
     }
+    if (profileLink) profileLink.hidden = !currentUser;
     if (adminLink) adminLink.hidden = true;
     if (riderLink) riderLink.hidden = true;
     if (logoutBtn) {
@@ -393,8 +554,14 @@
     var host = document.getElementById("promo-list");
     var form = document.getElementById("promo-form");
     if (!host || !form) return;
-    var snap = await fbDb.ref("promos").get();
-    var raw = snap.exists() ? snap.val() : {};
+    var raw = {};
+    try {
+      var snap = await fbDb.ref("promos").get();
+      raw = snap.exists() ? snap.val() : {};
+    } catch (e) {
+      notify("Failed to load promos: " + (e && e.message ? e.message : "Unknown error"));
+      return;
+    }
     var promos = Object.keys(raw || {}).map(function (k) {
       var p = raw[k] || {};
       return Object.assign({ code: k, active: true, type: "percent", value: 10, minSubtotal: 0, allowedPayments: ["cod", "gcash"] }, p);
@@ -479,11 +646,189 @@
         allowedPayments: allowedPayments,
         updatedAt: new Date().toISOString(),
       };
-      await fbDb.ref("promos/" + code).set(payload);
-      notify("Promo saved.");
-      form.reset();
-      loadPromosAdmin();
+      try {
+        await fbDb.ref("promos/" + code).set(payload);
+        notify("Promo saved.");
+        form.reset();
+        loadPromosAdmin();
+      } catch (e) {
+        notify("Failed to save promo: " + (e && e.message ? e.message : "Unknown error"));
+      }
     });
+  }
+
+  async function loadAdminProducts() {
+    if (currentPage !== "admin") return;
+    var host = document.getElementById("admin-products-list");
+    if (!host) return;
+    try {
+      var snap = await fbDb.ref("products").get();
+      var raw = snap.exists() ? snap.val() : {};
+      var products = Object.keys(raw || {}).map(function (id) {
+        return normalizeProductRecord(id, raw[id] || {});
+      });
+      products.sort(function (a, b) {
+        return String(a.title || "").localeCompare(String(b.title || ""));
+      });
+      if (!products.length) {
+        host.innerHTML = '<p class="muted small">No products yet. Add your first bouquet.</p>';
+        return;
+      }
+      host.innerHTML = products
+        .map(function (p) {
+          var flags = [];
+          if (p.hidden) flags.push("Hidden");
+          if (p.outOfStock) flags.push("Out of stock");
+          if (p.isDeleted) flags.push("Archived");
+          var flagText = flags.length ? " • " + flags.join(" • ") : "";
+          return (
+            '<article class="order-card">' +
+            '<div class="order-card-top"><strong>' +
+            p.title +
+            "</strong></div>" +
+            "<p class='order-meta muted small'>PHP " +
+            Number(p.price || 0) +
+            " • " +
+            (p.image || "no-image.jpg") +
+            flagText +
+            "</p>" +
+            '<div class="order-actions">' +
+            '<button class="ghost js-prod-edit" data-id="' +
+            p.id +
+            '">Edit</button>' +
+            '<button class="ghost js-prod-toggle-hide" data-id="' +
+            p.id +
+            '" data-next="' +
+            (p.hidden ? "0" : "1") +
+            '">' +
+            (p.hidden ? "Show" : "Hide") +
+            "</button>" +
+            '<button class="ghost js-prod-toggle-stock" data-id="' +
+            p.id +
+            '" data-next="' +
+            (p.outOfStock ? "0" : "1") +
+            '">' +
+            (p.outOfStock ? "Mark in stock" : "Mark out of stock") +
+            "</button>" +
+            '<button class="ghost js-prod-archive" data-id="' +
+            p.id +
+            '" data-next="' +
+            (p.isDeleted ? "0" : "1") +
+            '">' +
+            (p.isDeleted ? "Restore" : "Archive") +
+            "</button>" +
+            "</div></article>"
+          );
+        })
+        .join("");
+
+      var form = document.getElementById("admin-product-form");
+      if (form) {
+        host.querySelectorAll(".js-prod-edit").forEach(function (btn) {
+          btn.addEventListener("click", function () {
+            var id = btn.getAttribute("data-id");
+            var prod = products.find(function (p) {
+              return p.id === id;
+            });
+            if (!prod) return;
+            form.querySelector('[name="product_id"]').value = prod.id;
+            form.querySelector('[name="title"]').value = prod.title || "";
+            form.querySelector('[name="description"]').value = prod.description || "";
+            form.querySelector('[name="price"]').value = prod.price || "";
+            form.querySelector('[name="image"]').value = prod.image || "";
+          });
+        });
+      }
+
+      host.querySelectorAll(".js-prod-toggle-hide").forEach(function (btn) {
+        btn.addEventListener("click", async function () {
+          var id = btn.getAttribute("data-id");
+          var next = btn.getAttribute("data-next") === "1";
+          await fbDb.ref("products/" + id + "/hidden").set(next);
+          notify("Product visibility updated.");
+          loadAdminProducts();
+        });
+      });
+      host.querySelectorAll(".js-prod-toggle-stock").forEach(function (btn) {
+        btn.addEventListener("click", async function () {
+          var id = btn.getAttribute("data-id");
+          var next = btn.getAttribute("data-next") === "1";
+          await fbDb.ref("products/" + id + "/outOfStock").set(next);
+          notify("Product stock updated.");
+          loadAdminProducts();
+        });
+      });
+      host.querySelectorAll(".js-prod-archive").forEach(function (btn) {
+        btn.addEventListener("click", async function () {
+          var id = btn.getAttribute("data-id");
+          var next = btn.getAttribute("data-next") === "1";
+          await fbDb.ref("products/" + id + "/isDeleted").set(next);
+          notify(next ? "Product archived." : "Product restored.");
+          loadAdminProducts();
+        });
+      });
+    } catch (e) {
+      notify("Failed to load products: " + (e && e.message ? e.message : "Unknown error"));
+    }
+  }
+
+  function initAdminProductForm() {
+    if (currentPage !== "admin") return;
+    var form = document.getElementById("admin-product-form");
+    var resetBtn = document.getElementById("admin-product-reset");
+    if (!form || form._ssfBound) return;
+    form._ssfBound = true;
+    form.addEventListener("submit", async function (ev) {
+      ev.preventDefault();
+      if (!currentUser || currentUser.role !== "admin") {
+        notify("Admin account required.");
+        return;
+      }
+      var data = new FormData(form);
+      var id = String(data.get("product_id") || "").trim();
+      var title = String(data.get("title") || "").trim();
+      var description = String(data.get("description") || "").trim();
+      var price = Number(data.get("price") || 0);
+      var image = String(data.get("image") || "").trim();
+      if (!title || !description || !price || !image) {
+        notify("All product fields are required.");
+        return;
+      }
+      var payload = {
+        title: title,
+        description: description,
+        price: price,
+        image: image,
+      };
+      try {
+        if (id) {
+          await fbDb.ref("products/" + id).update(payload);
+        } else {
+          var ref = fbDb.ref("products").push();
+          await ref.set(
+            Object.assign(
+              {
+                hidden: false,
+                outOfStock: false,
+                isDeleted: false,
+              },
+              payload
+            )
+          );
+        }
+        notify("Product saved.");
+        form.reset();
+        loadAdminProducts();
+      } catch (e) {
+        notify("Failed to save product: " + (e && e.message ? e.message : "Unknown error"));
+      }
+    });
+    if (resetBtn) {
+      resetBtn.addEventListener("click", function () {
+        form.reset();
+        form.querySelector('[name="product_id"]').value = "";
+      });
+    }
   }
 
   function boot() {
@@ -498,6 +843,8 @@
       currentUser = {
         uid: u.uid,
         email: u.email || "",
+        fullName: (profile && profile.fullName) || "",
+        phone: (profile && profile.phone) || "",
         role: (profile && profile.role) || roleByEmail(u.email || ""),
       };
       bindTopbar();
@@ -507,6 +854,8 @@
       if (currentPage === "admin" && currentUser.role === "admin") {
         initPromoForm();
         loadPromosAdmin();
+        initAdminProductForm();
+        loadAdminProducts();
         loadAdminOrders();
       }
       if (currentPage === "rider" && currentUser.role === "rider") loadRiderOrders();

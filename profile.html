@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Profile - Sweet Surprise</title>
+    <link rel="stylesheet" href="css/styles.css" />
+  </head>
+  <body data-page="profile">
+    <header class="site-header">
+      <div class="inner">
+        <a class="brand" href="index.html"><span class="brand-word">Sweet Surprise</span></a>
+        <nav class="nav">
+          <a href="index.html">Shop</a>
+          <a href="user-orders.html" id="nav-orders-link" hidden>Orders</a>
+          <a href="profile.html" aria-current="page" id="nav-profile-link" hidden>Profile</a>
+          <a href="admin-orders.html" id="nav-admin-link" hidden>Admin</a>
+          <a href="rider-orders.html" id="nav-rider-link" hidden>Rider</a>
+          <button type="button" class="ghost auth-btn" id="logout-btn">Logout</button>
+          <span class="auth-status small muted" id="user-email">...</span>
+        </nav>
+      </div>
+    </header>
+
+    <main class="shop">
+      <div class="shop-head">
+        <h2>Profile</h2>
+        <p class="muted">Update your details and change your password.</p>
+      </div>
+      <p class="small" id="page-notice" hidden></p>
+
+      <section class="dashboard-wrap">
+        <div class="dashboard-grid">
+          <div class="dashboard-card">
+            <h3>Account Details</h3>
+            <form id="profile-form" class="dashboard-form">
+              <label>
+                Full name
+                <input name="fullName" type="text" maxlength="120" required />
+              </label>
+              <label>
+                Email
+                <input name="email" type="email" readonly />
+              </label>
+              <label>
+                Mobile (11 digits)
+                <input name="phone" type="tel" inputmode="numeric" pattern="\d*" maxlength="11" data-numeric-only="true" />
+              </label>
+              <div class="checkout-actions">
+                <button type="submit" class="primary">Save Profile</button>
+              </div>
+            </form>
+          </div>
+
+          <div class="dashboard-card">
+            <h3>Change Password</h3>
+            <form id="password-form" class="dashboard-form">
+              <label>
+                New password
+                <input name="newPassword" type="password" minlength="6" required />
+              </label>
+              <label>
+                Confirm new password
+                <input name="confirmPassword" type="password" minlength="6" required />
+              </label>
+              <div class="checkout-actions">
+                <button type="submit" class="primary">Update Password</button>
+              </div>
+              <p class="muted small">If Firebase asks for recent login, logout then login again before changing password.</p>
+            </form>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <script>
+      window.SSF_FIREBASE_CONFIG = {
+        apiKey: "AIzaSyAD_IuSJyauYTW6m13UQHreYdeA_ypbx9k",
+        authDomain: "sweet-surprise-website.firebaseapp.com",
+        databaseURL: "https://sweet-surprise-website-default-rtdb.asia-southeast1.firebasedatabase.app",
+        projectId: "sweet-surprise-website",
+        storageBucket: "sweet-surprise-website.firebasestorage.app",
+        messagingSenderId: "189550685416",
+        appId: "1:189550685416:web:6df2d9861bca92ce4aad5d",
+        measurementId: "G-8LL1JE9CPQ"
+      };
+    </script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
+    <script src="js/profile.js"></script>
+  </body>
+</html>
