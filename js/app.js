@@ -855,7 +855,7 @@
     });
     imageEl.addEventListener("mouseenter", stop);
     imageEl.addEventListener("mouseleave", start);
-    render(0);
+    render(Math.floor(Math.random() * slides.length));
     start();
   }
 
@@ -869,6 +869,7 @@
       { src: "assets/images/discount-1.jpg", alt: "Discount banner 1" },
       { src: "assets/images/discount-2.jpg", alt: "Discount banner 2" },
       { src: "assets/images/discount-3.jpg", alt: "Discount banner 3" },
+      { src: "assets/images/discount-4.jpg", alt: "Discount banner 4" },
     ];
     var index = 0;
     var timer = null;

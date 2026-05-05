@@ -1064,18 +1064,19 @@ button.full {
 
 .discount-carousel {
   position: relative;
-  min-height: 180px;
+  min-height: 220px;
   border: 1px solid var(--border);
   border-radius: var(--radius);
   overflow: hidden;
-  background: var(--cream);
+  background: #fff;
   margin-bottom: 1rem;
 }
 
 #discount-image {
   width: 100%;
-  height: clamp(180px, 25vw, 280px);
-  object-fit: cover;
+  height: clamp(220px, 30vw, 340px);
+  object-fit: contain;
+  background: #fff;
 }
 
 .footer-follow-text {
@@ -1118,7 +1119,7 @@ button.full {
   }
 
   #discount-image {
-    height: 170px;
+    height: 200px;
   }
 
   .footer-follow-text {
@@ -1139,4 +1140,22 @@ button.full {
     width: 22px;
     height: 22px;
   }
+}
+
+.legal-links {
+  margin-top: 0.75rem;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.45rem;
+}
+
+.legal-link-btn {
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 0.35rem 0.65rem;
+  text-decoration: none;
+  color: var(--ink);
+  background: #fff;
+  font-size: 0.78rem;
 }
