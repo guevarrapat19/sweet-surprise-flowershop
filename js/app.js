@@ -19,9 +19,49 @@
   var currentUser = null;
   var authMode = "login";
   var noticeTimer = null;
+  var ORDER_STATUSES = {
+    PENDING: "pending",
+    APPROVED: "approved",
+    OUT_FOR_DELIVERY: "out_for_delivery",
+  };
 
   function formatPHP(n) {
     return "₱" + n.toLocaleString("en-PH");
+  }
+
+  function slugify(text) {
+    return String(text || "")
+      .toLowerCase()
+      .trim()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-+|-+$/g, "")
+      .slice(0, 48);
+  }
+
+  function prettyStatus(status) {
+    if (status === ORDER_STATUSES.APPROVED) return "Approved";
+    if (status === ORDER_STATUSES.OUT_FOR_DELIVERY) return "Out for delivery";
+    return "Pending approval";
+  }
+
+  function statusClass(status) {
+    if (status === ORDER_STATUSES.APPROVED) return "status-approved";
+    if (status === ORDER_STATUSES.OUT_FOR_DELIVERY) return "status-out-for-delivery";
+    return "status-pending";
+  }
+
+  function normalizeOrder(order, fallbackRef) {
+    var safe = order || {};
+    return {
+      orderRef: safe.orderRef || fallbackRef || "N/A",
+      placedAt: safe.placedAt || "",
+      status: safe.status || ORDER_STATUSES.PENDING,
+      payment: safe.payment || "cod",
+      total: Number(safe.total || 0),
+      customer: safe.customer || {},
+      lines: Array.isArray(safe.lines) ? safe.lines : [],
+      account: safe.account || {},
+    };
   }
 
   function asset(path) {
@@ -469,10 +509,20 @@
     var els = getAuthFormEls();
     if (!els.status) return;
     var logged = !!(currentUser && currentUser.email);
+    var myOrdersBtn = document.getElementById("my-orders-open");
+    var adminBtn = document.getElementById("admin-dashboard-open");
+    var myOrdersSection = document.getElementById("my-orders-dashboard");
+    var adminSection = document.getElementById("admin-dashboard");
     els.status.textContent = logged ? currentUser.email : "Guest";
     if (els.openBtn) els.openBtn.hidden = logged;
     if (els.logoutBtn) els.logoutBtn.hidden = !logged;
     if (els.adminPill) els.adminPill.hidden = !(logged && currentUser.role === "admin");
+    if (myOrdersBtn) myOrdersBtn.hidden = !logged;
+    if (adminBtn) adminBtn.hidden = !(logged && currentUser.role === "admin");
+    if (!logged) {
+      if (myOrdersSection) myOrdersSection.hidden = true;
+      if (adminSection) adminSection.hidden = true;
+    }
     applyCheckoutProfile();
   }
 
@@ -1148,6 +1198,7 @@
       var snapshot = {
         orderRef: orderRef,
         placedAt: new Date().toISOString(),
+        status: ORDER_STATUSES.PENDING,
         account: currentUser
           ? {
               uid: currentUser.uid || "",
@@ -1222,10 +1273,274 @@
     });
   }
 
+  function setSectionVisible(el, visible) {
+    if (!el) return;
+    el.hidden = !visible;
+    if (visible) {
+      el.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+  }
+
+  function renderOrderList(host, orders, includeActions) {
+    if (!host) return;
+    host.innerHTML = "";
+    if (!orders.length) {
+      var empty = document.createElement("p");
+      empty.className = "muted small";
+      empty.textContent = "No orders yet.";
+      host.appendChild(empty);
+      return;
+    }
+    orders.forEach(function (o) {
+      var card = document.createElement("article");
+      card.className = "order-card";
+
+      var top = document.createElement("div");
+      top.className = "order-card-top";
+      var title = document.createElement("strong");
+      title.textContent = o.orderRef;
+      var pill = document.createElement("span");
+      pill.className = "status-pill " + statusClass(o.status);
+      pill.textContent = prettyStatus(o.status);
+      top.appendChild(title);
+      top.appendChild(pill);
+
+      var meta = document.createElement("p");
+      meta.className = "order-meta muted small";
+      meta.textContent =
+        "Customer: " +
+        (o.customer && o.customer.name ? o.customer.name : "N/A") +
+        " • Payment: " +
+        String(o.payment || "cod").toUpperCase() +
+        " • Total: " +
+        formatPHP(Number(o.total || 0));
+
+      var lines = document.createElement("ul");
+      lines.className = "order-lines small";
+      (o.lines || []).forEach(function (line) {
+        var li = document.createElement("li");
+        li.textContent = line.title + " x" + line.qty;
+        lines.appendChild(li);
+      });
+
+      card.appendChild(top);
+      card.appendChild(meta);
+      card.appendChild(lines);
+
+      if (includeActions) {
+        var actions = document.createElement("div");
+        actions.className = "order-actions";
+        if (o.status === ORDER_STATUSES.PENDING) {
+          var approveBtn = document.createElement("button");
+          approveBtn.type = "button";
+          approveBtn.className = "primary";
+          approveBtn.textContent = "Approve order";
+          approveBtn.addEventListener("click", function () {
+            updateOrderStatus(o, ORDER_STATUSES.APPROVED);
+          });
+          actions.appendChild(approveBtn);
+        }
+        if (o.status === ORDER_STATUSES.APPROVED) {
+          var shipBtn = document.createElement("button");
+          shipBtn.type = "button";
+          shipBtn.className = "ghost";
+          shipBtn.textContent = "Out for delivery";
+          shipBtn.addEventListener("click", function () {
+            updateOrderStatus(o, ORDER_STATUSES.OUT_FOR_DELIVERY);
+          });
+          actions.appendChild(shipBtn);
+        }
+        if (!actions.children.length) {
+          var done = document.createElement("span");
+          done.className = "small muted";
+          done.textContent = "No actions needed.";
+          actions.appendChild(done);
+        }
+        card.appendChild(actions);
+      }
+
+      host.appendChild(card);
+    });
+  }
+
+  async function loadUserOrders() {
+    var host = document.getElementById("user-orders-list");
+    if (!host) return;
+    if (!currentUser || !currentUser.uid) {
+      renderOrderList(host, [], false);
+      return;
+    }
+    var orders = [];
+    if (firebaseReady && fbDb) {
+      try {
+        var snap = await fbDb.ref("orders/" + currentUser.uid).get();
+        var raw = snap.exists() ? snap.val() : {};
+        Object.keys(raw || {}).forEach(function (key) {
+          orders.push(normalizeOrder(raw[key], key));
+        });
+      } catch (e) {}
+    }
+    if (!orders.length) {
+      try {
+        var local = JSON.parse(localStorage.getItem("ssf-orders-demo") || "[]");
+        orders = (local || [])
+          .filter(function (o) {
+            return o && o.account && o.account.uid === currentUser.uid;
+          })
+          .map(function (o) {
+            return normalizeOrder(o, o.orderRef);
+          });
+      } catch (e) {}
+    }
+    orders.sort(function (a, b) {
+      return new Date(b.placedAt || 0).getTime() - new Date(a.placedAt || 0).getTime();
+    });
+    renderOrderList(host, orders, false);
+  }
+
+  async function loadAdminOrders() {
+    var host = document.getElementById("admin-orders-list");
+    if (!host) return;
+    if (!currentUser || currentUser.role !== "admin") {
+      renderOrderList(host, [], true);
+      return;
+    }
+    var orders = [];
+    if (firebaseReady && fbDb) {
+      try {
+        var snap = await fbDb.ref("orders_by_ref").get();
+        var raw = snap.exists() ? snap.val() : {};
+        Object.keys(raw || {}).forEach(function (key) {
+          orders.push(normalizeOrder(raw[key], key));
+        });
+      } catch (e) {}
+    }
+    if (!orders.length) {
+      try {
+        var local = JSON.parse(localStorage.getItem("ssf-orders-demo") || "[]");
+        orders = (local || []).map(function (o) {
+          return normalizeOrder(o, o.orderRef);
+        });
+      } catch (e) {}
+    }
+    orders.sort(function (a, b) {
+      return new Date(b.placedAt || 0).getTime() - new Date(a.placedAt || 0).getTime();
+    });
+    renderOrderList(host, orders, true);
+  }
+
+  async function updateOrderStatus(order, nextStatus) {
+    if (!order || !order.orderRef) return;
+    if (!currentUser || currentUser.role !== "admin") {
+      notify("error", "Only admin can update order status.");
+      return;
+    }
+    var payload = Object.assign({}, order, { status: nextStatus });
+    try {
+      if (firebaseReady && fbDb) {
+        await fbDb.ref("orders_by_ref/" + order.orderRef + "/status").set(nextStatus);
+        if (order.account && order.account.uid) {
+          await fbDb.ref("orders/" + order.account.uid + "/" + order.orderRef + "/status").set(nextStatus);
+        }
+      }
+      try {
+        var local = JSON.parse(localStorage.getItem("ssf-orders-demo") || "[]");
+        local = local.map(function (x) {
+          if (x && x.orderRef === order.orderRef) return Object.assign({}, x, { status: nextStatus });
+          return x;
+        });
+        localStorage.setItem("ssf-orders-demo", JSON.stringify(local));
+      } catch (e) {}
+      notify("success", "Order " + order.orderRef + " updated to " + prettyStatus(nextStatus) + ".");
+      await loadAdminOrders();
+      await loadUserOrders();
+    } catch (e) {
+      notify("error", "Failed to update order status.");
+    }
+  }
+
+  async function addProductFromAdminForm(ev) {
+    ev.preventDefault();
+    if (!currentUser || currentUser.role !== "admin") {
+      notify("error", "Only admin can add products.");
+      return;
+    }
+    var form = ev.target;
+    var data = new FormData(form);
+    var title = String(data.get("title") || "").trim();
+    var description = String(data.get("description") || "").trim();
+    var price = Number(data.get("price") || 0);
+    var image = String(data.get("image") || "").trim();
+    if (!title || !description || !image || price <= 0) {
+      notify("error", "Please complete all product fields.");
+      return;
+    }
+    var id = slugify(title) || "product-" + Date.now();
+    var product = {
+      id: id,
+      title: title,
+      description: description,
+      images: [image],
+      variants: [{ id: "std", label: "Standard — " + formatPHP(price), price: price, short: "Standard" }],
+    };
+    try {
+      if (firebaseReady && fbDb) {
+        await fbDb.ref("products/" + id).set(product);
+      }
+      PRODUCTS.push(product);
+      renderProducts();
+      form.reset();
+      notify("success", "Product added: " + title);
+    } catch (e) {
+      notify("error", "Failed to add product.");
+    }
+  }
+
+  function initDashboards() {
+    var myOpen = document.getElementById("my-orders-open");
+    var myClose = document.getElementById("my-orders-close");
+    var adminOpen = document.getElementById("admin-dashboard-open");
+    var adminClose = document.getElementById("admin-dashboard-close");
+    var mySection = document.getElementById("my-orders-dashboard");
+    var adminSection = document.getElementById("admin-dashboard");
+    var productForm = document.getElementById("admin-product-form");
+
+    if (myOpen) {
+      myOpen.addEventListener("click", function () {
+        setSectionVisible(mySection, true);
+        loadUserOrders();
+      });
+    }
+    if (myClose) {
+      myClose.addEventListener("click", function () {
+        setSectionVisible(mySection, false);
+      });
+    }
+    if (adminOpen) {
+      adminOpen.addEventListener("click", function () {
+        if (!currentUser || currentUser.role !== "admin") {
+          notify("error", "Admin access only.");
+          return;
+        }
+        setSectionVisible(adminSection, true);
+        loadAdminOrders();
+      });
+    }
+    if (adminClose) {
+      adminClose.addEventListener("click", function () {
+        setSectionVisible(adminSection, false);
+      });
+    }
+    if (productForm) {
+      productForm.addEventListener("submit", addProductFromAdminForm);
+    }
+  }
+
   var yr = document.getElementById("year");
   if (yr) yr.textContent = String(new Date().getFullYear());
 
   initAuthUi();
+  initDashboards();
   loadProductsFromRealtimeDb().then(function () {
     initShowcaseCarousel();
     if (document.getElementById("products") && document.getElementById("product-card-template")) {

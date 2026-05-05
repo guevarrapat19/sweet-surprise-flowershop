@@ -882,3 +882,126 @@ button.full {
   text-decoration: underline;
   text-underline-offset: 0.2em;
 }
+
+.dashboard-wrap {
+  max-width: 1120px;
+  margin: 0 auto 2rem;
+  padding: 1.2rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  box-shadow: var(--shadow);
+}
+
+.dashboard-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.8rem;
+}
+
+.dashboard-head h2,
+.dashboard-card h3 {
+  margin: 0;
+}
+
+.dashboard-grid {
+  margin-top: 1rem;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1rem;
+}
+
+@media (min-width: 940px) {
+  .dashboard-grid {
+    grid-template-columns: 0.9fr 1.1fr;
+  }
+}
+
+.dashboard-card {
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 0.85rem;
+  background: #fffdfc;
+}
+
+.dashboard-form label {
+  display: block;
+  margin-top: 0.65rem;
+  font-size: 0.82rem;
+  font-weight: 500;
+}
+
+.dashboard-form input,
+.dashboard-form textarea {
+  width: 100%;
+  margin-top: 0.25rem;
+  padding: 0.45rem 0.55rem;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  font: inherit;
+}
+
+.dashboard-list {
+  margin-top: 0.75rem;
+  display: grid;
+  gap: 0.65rem;
+}
+
+.order-card {
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 0.7rem;
+  background: #fff;
+}
+
+.order-card-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.order-meta {
+  margin: 0.2rem 0 0;
+}
+
+.status-pill {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  padding: 0.15rem 0.5rem;
+  font-size: 0.74rem;
+  font-weight: 600;
+}
+
+.status-pending {
+  background: #fff5df;
+  color: #7a5600;
+  border: 1px solid #ead3a4;
+}
+
+.status-approved {
+  background: #e9f7ef;
+  color: #1f5f43;
+  border: 1px solid #b9dfca;
+}
+
+.status-out-for-delivery {
+  background: #eaf2ff;
+  color: #1f4f8b;
+  border: 1px solid #bfd4f7;
+}
+
+.order-lines {
+  margin: 0.4rem 0 0;
+  padding-left: 1rem;
+  color: var(--muted);
+}
+
+.order-actions {
+  display: flex;
+  gap: 0.45rem;
+  flex-wrap: wrap;
+  margin-top: 0.5rem;
+}

@@ -31,6 +31,8 @@
         <nav class="nav" aria-label="Primary">
           <a href="index.html#shop">Shop</a>
           <a href="about.html">About</a>
+          <button type="button" class="ghost auth-btn" id="my-orders-open" hidden>My Orders</button>
+          <button type="button" class="ghost auth-btn" id="admin-dashboard-open" hidden>Admin Dashboard</button>
           <button type="button" class="ghost auth-btn" id="auth-open">Login</button>
           <button type="button" class="ghost auth-btn" id="auth-logout" hidden>Logout</button>
           <span class="auth-status small muted" id="auth-status">Guest</span>
@@ -80,6 +82,55 @@
           <p class="muted">Availability and delivery timing can be confirmed at checkout—we will match you to the best slot.</p>
         </div>
         <div class="products" id="products"></div>
+      </section>
+
+      <section class="dashboard-wrap" id="my-orders-dashboard" hidden>
+        <div class="dashboard-head">
+          <h2>My Orders</h2>
+          <button type="button" class="ghost" id="my-orders-close">Close</button>
+        </div>
+        <p class="muted small">Track your orders and check if they are approved or out for delivery.</p>
+        <div id="user-orders-list" class="dashboard-list"></div>
+      </section>
+
+      <section class="dashboard-wrap" id="admin-dashboard" hidden>
+        <div class="dashboard-head">
+          <h2>Admin Dashboard</h2>
+          <button type="button" class="ghost" id="admin-dashboard-close">Close</button>
+        </div>
+        <p class="muted small">Add products, review orders, approve orders, and set orders out for delivery.</p>
+
+        <div class="dashboard-grid">
+          <div class="dashboard-card">
+            <h3>Add Product</h3>
+            <form id="admin-product-form" class="dashboard-form">
+              <label>
+                Product title
+                <input name="title" type="text" required maxlength="140" />
+              </label>
+              <label>
+                Description
+                <textarea name="description" rows="3" maxlength="600" required></textarea>
+              </label>
+              <label>
+                Price (PHP)
+                <input name="price" type="number" min="1" step="1" required />
+              </label>
+              <label>
+                Image filename (inside assets/products)
+                <input name="image" type="text" required placeholder="sample-product.jpg" />
+              </label>
+              <div class="checkout-actions">
+                <button type="submit" class="primary">Add product</button>
+              </div>
+            </form>
+          </div>
+
+          <div class="dashboard-card">
+            <h3>Orders</h3>
+            <div id="admin-orders-list" class="dashboard-list"></div>
+          </div>
+        </div>
       </section>
     </main>
 
