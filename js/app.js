@@ -64,6 +64,18 @@
     };
   }
 
+  function normalizeProductRecord(product) {
+    var p = product || {};
+    return Object.assign(
+      {
+        hidden: false,
+        outOfStock: false,
+        isDeleted: false,
+      },
+      p
+    );
+  }
+
   function asset(path) {
     return "assets/products/" + encodeURIComponent(path);
   }
@@ -448,7 +460,7 @@
         var cleaned = list.filter(function (p) {
           return p && p.id && p.title && Array.isArray(p.images) && Array.isArray(p.variants);
         });
-        if (cleaned.length) PRODUCTS = cleaned;
+        if (cleaned.length) PRODUCTS = cleaned.map(normalizeProductRecord);
       })
       .catch(function () {});
   }
@@ -833,7 +845,9 @@
     var tpl = document.getElementById("product-card-template");
     root.innerHTML = "";
 
-    PRODUCTS.forEach(function (p) {
+    PRODUCTS.filter(function (p) {
+      return !p.isDeleted && !p.hidden;
+    }).forEach(function (p) {
       var node = tpl.content.firstElementChild.cloneNode(true);
       var gallery = node.querySelector(".product-gallery");
       var imgEl = node.querySelector(".product-image");
@@ -971,6 +985,7 @@
       }
 
       addBtn.addEventListener("click", function () {
+        if (p.outOfStock) return;
         var vid = selectedVariant[p.id] || p.variants[0].id;
         addToCart(p.id, vid, {
           color: selectedChoices[p.id].color || "",
@@ -978,6 +993,13 @@
           ribbon: selectedChoices[p.id].ribbon || "",
         });
       });
+      if (p.outOfStock) {
+        addBtn.disabled = true;
+        addBtn.textContent = "Out of stock";
+      } else {
+        addBtn.disabled = false;
+        addBtn.textContent = "Add to cart";
+      }
 
       root.appendChild(node);
     });
@@ -1481,19 +1503,178 @@
       title: title,
       description: description,
       images: [image],
+      hidden: false,
+      outOfStock: false,
+      isDeleted: false,
       variants: [{ id: "std", label: "Standard — " + formatPHP(price), price: price, short: "Standard" }],
     };
     try {
       if (firebaseReady && fbDb) {
         await fbDb.ref("products/" + id).set(product);
       }
-      PRODUCTS.push(product);
+      PRODUCTS.push(normalizeProductRecord(product));
       renderProducts();
       form.reset();
+      loadAdminProducts();
       notify("success", "Product added: " + title);
     } catch (e) {
       notify("error", "Failed to add product.");
     }
+  }
+
+  async function syncProductState(productId, patch) {
+    var idx = PRODUCTS.findIndex(function (p) {
+      return p.id === productId;
+    });
+    if (idx < 0) return;
+    var next = Object.assign({}, PRODUCTS[idx], patch || {});
+    try {
+      if (firebaseReady && fbDb) {
+        await fbDb.ref("products/" + productId).update(patch || {});
+      }
+      PRODUCTS[idx] = next;
+      renderProducts();
+      loadAdminProducts();
+    } catch (e) {
+      notify("error", "Failed updating product.");
+    }
+  }
+
+  async function removeProduct(productId) {
+    var idx = PRODUCTS.findIndex(function (p) {
+      return p.id === productId;
+    });
+    if (idx < 0) return;
+    try {
+      if (firebaseReady && fbDb) {
+        await fbDb.ref("products/" + productId).update({
+          isDeleted: true,
+          hidden: true,
+        });
+      }
+      PRODUCTS[idx] = Object.assign({}, PRODUCTS[idx], {
+        isDeleted: true,
+        hidden: true,
+      });
+      renderProducts();
+      loadAdminProducts();
+      notify("success", "Product removed. You can restore it anytime.");
+    } catch (e) {
+      notify("error", "Failed removing product.");
+    }
+  }
+
+  async function restoreProduct(productId) {
+    var idx = PRODUCTS.findIndex(function (p) {
+      return p.id === productId;
+    });
+    if (idx < 0) return;
+    try {
+      if (firebaseReady && fbDb) {
+        await fbDb.ref("products/" + productId).update({
+          isDeleted: false,
+        });
+      }
+      PRODUCTS[idx] = Object.assign({}, PRODUCTS[idx], {
+        isDeleted: false,
+      });
+      renderProducts();
+      loadAdminProducts();
+      notify("success", "Product restored.");
+    } catch (e) {
+      notify("error", "Failed restoring product.");
+    }
+  }
+
+  function renderAdminProducts(products) {
+    var host = document.getElementById("admin-products-list");
+    if (!host) return;
+    host.innerHTML = "";
+    if (!products.length) {
+      var empty = document.createElement("p");
+      empty.className = "muted small";
+      empty.textContent = "No products found.";
+      host.appendChild(empty);
+      return;
+    }
+    products.forEach(function (p) {
+      var card = document.createElement("article");
+      card.className = "order-card";
+
+      var top = document.createElement("div");
+      top.className = "order-card-top";
+      var title = document.createElement("strong");
+      title.textContent = p.title;
+      var status = document.createElement("span");
+      var txt = p.outOfStock ? "Out of stock" : "In stock";
+      if (p.hidden) txt += " • Hidden";
+      if (p.isDeleted) txt += " • Removed";
+      status.className = "status-pill " + (p.outOfStock ? "status-pending" : "status-approved");
+      status.textContent = txt;
+      top.appendChild(title);
+      top.appendChild(status);
+
+      var meta = document.createElement("p");
+      meta.className = "product-admin-meta muted small";
+      meta.textContent = "ID: " + p.id;
+
+      var actions = document.createElement("div");
+      actions.className = "order-actions";
+
+      if (p.isDeleted) {
+        var restoreBtn = document.createElement("button");
+        restoreBtn.type = "button";
+        restoreBtn.className = "primary";
+        restoreBtn.textContent = "Restore product";
+        restoreBtn.addEventListener("click", function () {
+          restoreProduct(p.id);
+        });
+        actions.appendChild(restoreBtn);
+      } else {
+        var hideBtn = document.createElement("button");
+        hideBtn.type = "button";
+        hideBtn.className = "ghost";
+        hideBtn.textContent = p.hidden ? "Show product" : "Hide product";
+        hideBtn.addEventListener("click", function () {
+          syncProductState(p.id, { hidden: !p.hidden });
+        });
+        actions.appendChild(hideBtn);
+
+        var stockBtn = document.createElement("button");
+        stockBtn.type = "button";
+        stockBtn.className = "ghost";
+        stockBtn.textContent = p.outOfStock ? "Mark in stock" : "Mark out of stock";
+        stockBtn.addEventListener("click", function () {
+          syncProductState(p.id, { outOfStock: !p.outOfStock });
+        });
+        actions.appendChild(stockBtn);
+
+        var removeBtn = document.createElement("button");
+        removeBtn.type = "button";
+        removeBtn.className = "ghost";
+        removeBtn.textContent = "Remove product";
+        removeBtn.addEventListener("click", function () {
+          if (!confirm("Remove this product? You can restore it later from admin dashboard.")) return;
+          removeProduct(p.id);
+        });
+        actions.appendChild(removeBtn);
+      }
+
+      card.appendChild(top);
+      card.appendChild(meta);
+      card.appendChild(actions);
+      host.appendChild(card);
+    });
+  }
+
+  async function loadAdminProducts() {
+    if (!currentUser || currentUser.role !== "admin") {
+      renderAdminProducts([]);
+      return;
+    }
+    renderAdminProducts(
+      PRODUCTS
+    );
   }
 
   function initDashboards() {
@@ -1524,6 +1705,7 @@
         }
         setSectionVisible(adminSection, true);
         loadAdminOrders();
+        loadAdminProducts();
       });
     }
     if (adminClose) {

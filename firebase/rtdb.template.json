@@ -14,6 +14,7 @@
       "SSF-20260505-ABCD": {
         "orderRef": "SSF-20260505-ABCD",
         "placedAt": "2026-05-05T10:30:00.000Z",
+        "status": "pending",
         "account": {
           "uid": "sampleUid123",
           "email": "sample@email.com",
@@ -57,6 +58,9 @@
       "id": "big-sunflower-bouquet",
       "title": "Big Sunflower Bouquet",
       "description": "A bold sunflower bouquet.\n\nInclusions:\nSunflower stems\nSeasonal fillers\nPremium bouquet wrap and ribbon",
+      "hidden": false,
+      "outOfStock": false,
+      "isDeleted": false,
       "images": [
         "big-sunflower-bouquet-p1000-01.jpg",
         "big-sunflower-bouquet-p1000-02.jpg"

@@ -30,6 +30,9 @@
       "id": "big-sunflower-bouquet",
       "title": "Big Sunflower Bouquet",
       "description": "A bold sunflower bouquet with warm, bright tones and full wrap styling.\n\nInclusions:\nSunflower stems\nSeasonal fillers\nPremium bouquet wrap and ribbon",
+      "hidden": false,
+      "outOfStock": false,
+      "isDeleted": false,
       "images": [
         "big-sunflower-bouquet-p1000-01.jpg",
         "big-sunflower-bouquet-p1000-02.jpg",
@@ -64,6 +67,9 @@
       "id": "blush-pair-bouquet",
       "title": "Blush Pair Bouquet",
       "description": "A soft blush-toned bouquet styled for sweet, minimalist gifting.\n\nInclusions:\nPaired blush focal blooms\nLight filler accents\nClassic wrap and ribbon finish",
+      "hidden": false,
+      "outOfStock": false,
+      "isDeleted": false,
       "images": [
         "blush-pair-bouquet-p280.jpg"
       ],
@@ -95,6 +101,9 @@
       "id": "daisies-round-bouquet",
       "title": "Daisies Round Bouquet",
       "description": "A cheerful round daisy bouquet with fresh color variations by photo.\n\nInclusions:\n30 pcs option: round daisy arrangement\n40 pcs+ option: fuller round daisy arrangement\nBouquet wrap and ribbon",
+      "hidden": false,
+      "outOfStock": false,
+      "isDeleted": false,
       "images": [
         "daisies-round-bouquent-30pcs-p400-40pcs-p450-01.jpg",
         "daisies-round-bouquent-30pcs-p400-40pcs-p450-02.jpg",
@@ -135,6 +144,9 @@
       "id": "duo-tulips-bouquet",
       "title": "Duo Tulips Bouquet",
       "description": "A compact duo tulip bouquet that highlights clean color pairings.\n\nInclusions:\nTulip duo stems\nMinimal filler styling\nWrap and ribbon",
+      "hidden": false,
+      "outOfStock": false,
+      "isDeleted": false,
       "images": [
         "duo-tulips-bouquet-p200-01.jpg",
         "duo-tulips-bouquet-p200-02.jpg"
@@ -167,6 +179,9 @@
       "id": "glowbloom-bouquet",
       "title": "GlowBloom Bouquet",
       "description": "A premium arranged bouquet with rich tones and a full presentation look.\n\nInclusions:\nMixed premium blooms\nComplementary fillers\nPremium wrap and ribbon",
+      "hidden": false,
+      "outOfStock": false,
+      "isDeleted": false,
       "images": [
         "glowbloom-bouquet-p1000-01.jpg",
         "glowbloom-bouquet-p1000-02.jpg"
@@ -184,6 +199,9 @@
       "id": "kaia-bouquet",
       "title": "Kaia Bouquet",
       "description": "An elegant mixed bouquet with balanced texture and soft color layering.\n\nInclusions:\nMixed feature blooms\nSeasonal fillers\nSignature wrap and ribbon",
+      "hidden": false,
+      "outOfStock": false,
+      "isDeleted": false,
       "images": [
         "kaia-bouquet-p750.jpg"
       ],
@@ -200,6 +218,9 @@
       "id": "lilies-round-bouquet",
       "title": "Lilies Round Bouquet",
       "description": "A round lily arrangement with clean structure and graceful petal volume.\n\nInclusions:\nLily stems\nSoft supporting fillers\nRound bouquet wrap and ribbon",
+      "hidden": false,
+      "outOfStock": false,
+      "isDeleted": false,
       "images": [
         "lilies-round-bouquet-p850-01.jpg",
         "lilies-round-bouquet-p850-02.jpg"
@@ -217,6 +238,9 @@
       "id": "lily-mesh-bouquet",
       "title": "Lily Mesh Bouquet",
       "description": "A mesh-wrapped lily bouquet.\n\nInclusions:\nLily stems\nMesh wrap style\nRibbon tie",
+      "hidden": false,
+      "outOfStock": false,
+      "isDeleted": false,
       "images": [
         "llly-mesh-bouquet-p180-01.jpg",
         "llly-mesh-bouquet-p180-02.jpg",
@@ -236,6 +260,9 @@
       "id": "purple-mix-flower-bouquet",
       "title": "Purple Mix Flower Bouquet",
       "description": "A premium purple-themed mixed bouquet with layered texture and volume.\n\nInclusions:\n12pcs Lilies\n10pcs Spring Fillers\n5pcs Small Daisy\n5pcs Lavender",
+      "hidden": false,
+      "outOfStock": false,
+      "isDeleted": false,
       "images": [
         "purple-mix-flower-bouquet-p1600-01.jpg"
       ],
@@ -252,6 +279,9 @@
       "id": "single-tulip",
       "title": "Single Tulip",
       "description": "A simple tulip option for single gifting or small bundle orders.\n\nInclusions:\n1 pc option: single tulip stem\n3 pcs option: tulip trio bundle\nBasic wrap finish",
+      "hidden": false,
+      "outOfStock": false,
+      "isDeleted": false,
       "images": [
         "single-tulip-1pc-p40-3pcs-p100-01.jpg",
         "single-tulip-1pc-p40-3pcs-p100-02.jpg",
@@ -293,6 +323,9 @@
       "id": "single-tulip-bouquet",
       "title": "Single Tulip Bouquet",
       "description": "A single-tulip bouquet series with multiple photo color/style variations.\n\nInclusions:\nTulip stem bouquet\nDecorative wrap\nRibbon tie",
+      "hidden": false,
+      "outOfStock": false,
+      "isDeleted": false,
       "images": [
         "single-tulip-bouquet-p120-01.jpg",
         "single-tulip-bouquet-p120-02.jpg",
@@ -335,6 +368,9 @@
       "id": "sophie-bouquet",
       "title": "Sophie Bouquet",
       "description": "A balanced mixed bouquet suited for birthdays, gratitude, and everyday surprises.\n\nInclusions:\n3pcs tulips\n2 lilies\n2 fillers\n3 daisies",
+      "hidden": false,
+      "outOfStock": false,
+      "isDeleted": false,
       "images": [
         "sophie-bouquet-p450.jpg"
       ],
@@ -351,6 +387,9 @@
       "id": "sweet-tulip-bouquet",
       "title": "Sweet Tulip Bouquet",
       "description": "A sweet tulip-forward bouquet with fuller styling and two visual options.\n\nInclusions:\nTulip stems\nAccent fillers\nBouquet wrap and ribbon",
+      "hidden": false,
+      "outOfStock": false,
+      "isDeleted": false,
       "images": [
         "sweet-tulip-bouquet-p500-01.jpg",
         "sweet-tulip-bouquet-p500-02.jpg"

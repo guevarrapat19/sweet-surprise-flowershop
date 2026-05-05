@@ -1005,3 +1005,12 @@ button.full {
   flex-wrap: wrap;
   margin-top: 0.5rem;
 }
+
+.admin-subhead {
+  margin-top: 1rem !important;
+  font-size: 1rem;
+}
+
+.product-admin-meta {
+  margin: 0.25rem 0 0;
+}
