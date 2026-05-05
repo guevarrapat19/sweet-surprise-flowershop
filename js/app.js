@@ -578,6 +578,17 @@
       var cred = await fbAuth.signInWithEmailAndPassword(pack.email, pack.password);
       var profileSnap = await fbDb.ref("profiles/" + cred.user.uid).get();
       var profile = profileSnap.exists() ? profileSnap.val() : {};
+      if (!profile || !profile.uid) {
+        profile = {
+          uid: cred.user.uid,
+          fullName: cred.user.displayName || "",
+          email: cred.user.email || pack.email,
+          phone: "",
+          role: isAdminEmail(cred.user.email || pack.email) ? "admin" : "user",
+          createdAt: new Date().toISOString(),
+        };
+        await fbDb.ref("profiles/" + cred.user.uid).set(profile);
+      }
       currentUser = {
         uid: cred.user.uid,
         fullName: profile.fullName || cred.user.displayName || "",
@@ -647,8 +658,19 @@
         fbDb
           .ref("profiles/" + user.uid)
           .get()
-          .then(function (snap) {
+          .then(async function (snap) {
             var profile = snap.exists() ? snap.val() : {};
+            if (!profile || !profile.uid) {
+              profile = {
+                uid: user.uid,
+                fullName: user.displayName || "",
+                email: user.email || "",
+                phone: "",
+                role: isAdminEmail(user.email) ? "admin" : "user",
+                createdAt: new Date().toISOString(),
+              };
+              await fbDb.ref("profiles/" + user.uid).set(profile);
+            }
             currentUser = {
               uid: user.uid,
               fullName: profile.fullName || user.displayName || "",
