@@ -397,7 +397,7 @@
     var raw = snap.exists() ? snap.val() : {};
     var promos = Object.keys(raw || {}).map(function (k) {
       var p = raw[k] || {};
-      return Object.assign({ code: k, active: true, type: "percent", value: 10, minSubtotal: 0, allowedPayments: ["cod", "gcash", "maya"] }, p);
+      return Object.assign({ code: k, active: true, type: "percent", value: 10, minSubtotal: 0, allowedPayments: ["cod", "gcash"] }, p);
     });
     promos.sort(function (a, b) {
       return String(a.code).localeCompare(String(b.code));
@@ -421,7 +421,6 @@
         var allow = Array.isArray(p.allowedPayments) ? p.allowedPayments : [];
         form.querySelector('[name="allow_cod"]').checked = allow.indexOf("cod") !== -1;
         form.querySelector('[name="allow_gcash"]').checked = allow.indexOf("gcash") !== -1;
-        form.querySelector('[name="allow_maya"]').checked = allow.indexOf("maya") !== -1;
       });
     });
 
@@ -465,7 +464,6 @@
       var allowedPayments = [];
       if (data.get("allow_cod")) allowedPayments.push("cod");
       if (data.get("allow_gcash")) allowedPayments.push("gcash");
-      if (data.get("allow_maya")) allowedPayments.push("maya");
       if (!allowedPayments.length) {
         notify("Select at least one allowed payment.");
         return;

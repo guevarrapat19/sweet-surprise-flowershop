@@ -8,7 +8,6 @@
    * Customers see them after checkout. Replace placeholders before going live.
    */
   var SHOP_GCASH_NUMBER = "09XX XXX XXXX";
-  var SHOP_MAYA_NUMBER = "09XX XXX XXXX";
   var AUTH_KEY = "ssf-auth-local-v1";
   var FIREBASE_CONFIG = window.SSF_FIREBASE_CONFIG || null;
   var ADMIN_EMAILS = ["mianongalilee@gmail.com", "almarionestine@gmail.com"];
@@ -446,20 +445,6 @@
         orderRef +
         ".\n" +
         "After sending, wait for our SMS/messenger confirmation before delivery is scheduled."
-      );
-    }
-    if (method === "maya") {
-      return (
-        "Payment: Maya (PayMaya)\n" +
-        "Send ₱" +
-        totalStr +
-        " to Maya " +
-        SHOP_MAYA_NUMBER +
-        ".\n" +
-        "Use reference / message: " +
-        orderRef +
-        ".\n" +
-        "After sending, wait for our confirmation before delivery is scheduled."
       );
     }
     return "We will message you with payment details for " + method + ".";
@@ -1310,7 +1295,10 @@
     }
 
     payInputs.forEach(function (el) {
-      el.addEventListener("change", syncPaymentUi);
+      el.addEventListener("change", function () {
+        syncPaymentUi();
+        updateCheckoutGrandWithPromo(checkoutAddrCtl && checkoutAddrCtl.getTotals ? checkoutAddrCtl.getTotals().deliveryFee : 0);
+      });
     });
     syncPaymentUi();
     if (promoApplyBtn) {
