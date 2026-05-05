@@ -1,0 +1,30 @@
+{
+  "rules": {
+    ".read": false,
+    ".write": false,
+    "profiles": {
+      "$uid": {
+        ".read": "auth != null && (auth.uid === $uid || auth.token.email === 'mianongalilee@gmail.com' || auth.token.email === 'almarionestine@gmail.com')",
+        ".write": "auth != null && (auth.uid === $uid || auth.token.email === 'mianongalilee@gmail.com' || auth.token.email === 'almarionestine@gmail.com')"
+      }
+    },
+    "orders": {
+      "$uid": {
+        ".read": "auth != null && (auth.uid === $uid || auth.token.email === 'mianongalilee@gmail.com' || auth.token.email === 'almarionestine@gmail.com')",
+        "$orderRef": {
+          ".write": "auth != null && (auth.uid === $uid || auth.token.email === 'mianongalilee@gmail.com' || auth.token.email === 'almarionestine@gmail.com')"
+        }
+      }
+    },
+    "orders_by_ref": {
+      "$orderRef": {
+        ".read": "auth != null && (auth.token.email === 'mianongalilee@gmail.com' || auth.token.email === 'almarionestine@gmail.com')",
+        ".write": "auth != null"
+      }
+    },
+    "products": {
+      ".read": true,
+      ".write": "auth != null && (auth.token.email === 'mianongalilee@gmail.com' || auth.token.email === 'almarionestine@gmail.com')"
+    }
+  }
+}

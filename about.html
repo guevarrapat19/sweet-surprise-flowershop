@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="About Sweet Surprise Flowershop — who we are and how we serve your celebrations." />
+    <title>About — Sweet Surprise Flowershop</title>
+    <link rel="stylesheet" href="css/styles.css" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400..700;1,9..144,400..700&family=Outfit:wght@400;500;600&display=swap"
+      rel="stylesheet"
+    />
+  </head>
+  <body>
+    <header class="site-header">
+      <div class="inner">
+        <a class="brand" href="index.html">
+          <img
+            src="assets/products/logo%20and%20brand%20name.jpg"
+            alt="Sweet Surprise Flowershop"
+            class="brand-logo"
+            width="160"
+            height="48"
+            loading="lazy"
+          />
+          <span class="brand-word">Sweet Surprise</span>
+        </a>
+        <nav class="nav" aria-label="Primary">
+          <a href="index.html#shop">Shop</a>
+          <a href="about.html" aria-current="page">About</a>
+          <button type="button" class="cart-toggle" id="cart-toggle" aria-controls="cart-panel" aria-expanded="false">
+            Cart
+            <span class="cart-count" id="cart-count" aria-live="polite">0</span>
+          </button>
+        </nav>
+      </div>
+    </header>
+
+    <main class="about-main">
+      <header class="about-hero">
+        <p class="eyebrow">Our story</p>
+        <h1>Built for thoughtful gifts</h1>
+        <p class="about-lede muted">
+          Sweet Surprise Flowershop believes the right flowers turn an ordinary day into a memory. We curate arrangements that feel personal—never rushed, never generic.
+        </p>
+      </header>
+
+      <section class="about-section">
+        <h2>What we offer</h2>
+        <p>
+          From cheerful daisy rounds you can size to your budget, to signature bouquets like Sophie’s blend of tulips, lilies, fillers, and daisies, each piece is assembled with balance and care.
+          Lily mesh wraps add a quick, affordable sparkle when you want something sweet without a big spend.
+        </p>
+      </section>
+
+      <section class="about-section">
+        <h2>How shopping works</h2>
+        <ul class="about-list">
+          <li><strong>Browse</strong> featured arrangements on the shop page and open photos to see every angle.</li>
+          <li><strong>Personalize</strong> where options appear—like stem count on select bouquets—before you add to cart.</li>
+          <li><strong>Checkout</strong> with your contact details so we can coordinate delivery and special notes.</li>
+        </ul>
+        <p class="muted small about-note">
+          Shopping stays easy in the browser: your cart is saved on this device until you submit an order or clear it.
+        </p>
+      </section>
+
+      <section class="about-section about-cta-band">
+        <h2>Ready to send a surprise?</h2>
+        <p>Pick a bouquet today and make someone’s week a little brighter.</p>
+        <a class="cta" href="index.html#shop">Shop bouquets</a>
+      </section>
+    </main>
+
+    <aside class="cart-panel" id="cart-panel" aria-label="Shopping cart" hidden>
+      <div class="cart-panel-inner">
+        <header class="cart-panel-head">
+          <h2>Your cart</h2>
+          <button type="button" class="ghost" id="cart-close">Close</button>
+        </header>
+        <div id="cart-lines"></div>
+        <div class="cart-summary">
+          <div class="cart-row total">
+            <span>Bouquets subtotal</span>
+            <strong id="cart-total">₱0</strong>
+          </div>
+          <p class="cart-delivery-note muted small">Delivery fee is computed at checkout from your Philippine address.</p>
+          <button type="button" class="primary full" id="checkout-open">Continue to checkout</button>
+          <button type="button" class="ghost full" id="cart-clear">Clear cart</button>
+        </div>
+      </div>
+      <button type="button" class="cart-scrim" id="cart-scrim" aria-label="Close cart"></button>
+    </aside>
+
+    <div class="dialog-backdrop" id="checkout-backdrop" hidden></div>
+    <div class="dialog" id="checkout-dialog" role="dialog" aria-modal="true" aria-labelledby="checkout-title" hidden>
+      <h2 id="checkout-title">Checkout</h2>
+      <p class="muted small">
+        Guests can order without an account. Choose <strong>COD</strong> or an e-wallet, then submit—we’ll show the exact next steps (amount, reference code, numbers to pay). Real auto-payment links can plug in later (e.g. PayMongo).
+      </p>
+      <form id="checkout-form">
+        <label>
+          Full name
+          <input name="name" type="text" required autocomplete="name" />
+        </label>
+        <label>
+          Email
+          <input name="email" type="email" required autocomplete="email" />
+        </label>
+        <label>
+          Mobile (numbers only)
+          <input name="phone" type="tel" inputmode="numeric" pattern="\d*" maxlength="11" required autocomplete="tel" placeholder="09171234567" />
+        </label>
+        <fieldset class="checkout-fieldset" id="delivery-address-fs">
+          <legend>Delivery address (Philippines)</legend>
+          <p class="muted small address-api-note">
+            Choose region → province → city → barangay (data from PSA PSGC). Add your street details below—needed for COD and courier routing.
+          </p>
+          <label class="checkout-select-label">
+            Region
+            <select id="addr-region" required>
+              <option value="">Loading regions…</option>
+            </select>
+          </label>
+          <div id="province-wrap">
+            <label class="checkout-select-label">
+              Province
+              <select id="addr-province" disabled>
+                <option value="">Select region first…</option>
+              </select>
+            </label>
+          </div>
+          <label class="checkout-select-label">
+            City / Municipality
+            <select id="addr-city" disabled required>
+              <option value="">Select region &amp; province first…</option>
+            </select>
+          </label>
+          <label class="checkout-select-label">
+            Barangay
+            <select id="addr-barangay" disabled required>
+              <option value="">Select city first…</option>
+            </select>
+          </label>
+          <label>
+            Street, building &amp; unit / floor
+            <input id="addr-street" name="addr_street" type="text" required maxlength="260" autocomplete="address-line2" placeholder="House no., street, subdivision, landmarks…" />
+          </label>
+        </fieldset>
+        <fieldset class="checkout-fieldset">
+          <legend>Payment</legend>
+          <label class="check-row">
+            <input type="radio" name="payment" value="cod" checked />
+            <span>Cash on delivery (COD)</span>
+          </label>
+          <label class="check-row">
+            <input type="radio" name="payment" value="gcash" />
+            <span>GCash</span>
+          </label>
+          <label class="check-row">
+            <input type="radio" name="payment" value="maya" />
+            <span>Maya (PayMaya)</span>
+          </label>
+        </fieldset>
+        <div class="checkout-ewallet-extra" hidden aria-live="polite">
+          <p class="muted small wallet-hint">
+            After you pay in the GCash/Maya app, optionally paste your transaction ref here so we can match it faster.
+          </p>
+          <label>
+            Wallet transaction ref (optional)
+            <input name="ewallet_ref" type="text" placeholder="Last digits or confirmation ref" maxlength="120" autocomplete="off" />
+          </label>
+        </div>
+        <label>
+          Delivery window &amp; card message (optional)
+          <textarea name="notes" rows="3" maxlength="600" placeholder="Example: Deliver after 2 PM weekdays; card: “Happy Anniversary, Mia.”"></textarea>
+        </label>
+        <div id="checkout-totals" class="checkout-totals" hidden>
+          <div class="checkout-tally-row">
+            <span>Bouquets subtotal</span>
+            <span class="js-sub-products">₱0</span>
+          </div>
+          <div class="checkout-tally-row">
+            <span>Estimated delivery fee</span>
+            <span class="js-sub-delivery">—</span>
+          </div>
+          <div class="checkout-tally-row grand">
+            <span>Estimated amount to settle</span>
+            <strong class="js-grand-total">₱0</strong>
+          </div>
+          <p class="muted small checkout-total-note js-delivery-note"></p>
+        </div>
+        <div class="checkout-actions">
+          <button type="submit" class="primary">Place order</button>
+          <button type="button" class="ghost" id="checkout-cancel">Cancel</button>
+        </div>
+      </form>
+    </div>
+
+    <footer class="site-footer">
+      <p>© <span id="year"></span> Sweet Surprise Flowershop</p>
+    </footer>
+
+    <script src="js/ph-address.js"></script>
+    <script src="js/app.js"></script>
+  </body>
+</html>

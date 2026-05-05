@@ -1,0 +1,368 @@
+{
+  "profiles": {
+    "replace-with-auth-uid-admin-1": {
+      "uid": "replace-with-auth-uid-admin-1",
+      "fullName": "Admin 1",
+      "email": "mianongalilee@gmail.com",
+      "phone": "",
+      "role": "admin",
+      "createdAt": "2026-05-05T00:00:00.000Z"
+    },
+    "replace-with-auth-uid-admin-2": {
+      "uid": "replace-with-auth-uid-admin-2",
+      "fullName": "Admin 2",
+      "email": "almarionestine@gmail.com",
+      "phone": "",
+      "role": "admin",
+      "createdAt": "2026-05-05T00:00:00.000Z"
+    },
+    "replace-with-auth-uid-user-1": {
+      "uid": "replace-with-auth-uid-user-1",
+      "fullName": "Sample User",
+      "email": "sampleuser@email.com",
+      "phone": "09171234567",
+      "role": "user",
+      "createdAt": "2026-05-05T00:00:00.000Z"
+    }
+  },
+  "products": {
+    "big-sunflower-bouquet": {
+      "id": "big-sunflower-bouquet",
+      "title": "Big Sunflower Bouquet",
+      "description": "A bold sunflower bouquet with warm, bright tones and full wrap styling.\n\nInclusions:\nSunflower stems\nSeasonal fillers\nPremium bouquet wrap and ribbon",
+      "images": [
+        "big-sunflower-bouquet-p1000-01.jpg",
+        "big-sunflower-bouquet-p1000-02.jpg",
+        "big-sunflower-bouquet-p1000-03.jpg",
+        "big-sunflower-bouquet-p1000-04.jpg"
+      ],
+      "options": {
+        "colors": [
+          "Yellow",
+          "Orange",
+          "Mixed Warm"
+        ],
+        "wraps": [
+          "Kraft Wrap",
+          "Korean Wrap"
+        ],
+        "ribbons": [
+          "Cream Ribbon",
+          "Gold Ribbon"
+        ]
+      },
+      "variants": [
+        {
+          "id": "std",
+          "label": "Standard — ₱1,000",
+          "price": 1000,
+          "short": "Standard"
+        }
+      ]
+    },
+    "blush-pair-bouquet": {
+      "id": "blush-pair-bouquet",
+      "title": "Blush Pair Bouquet",
+      "description": "A soft blush-toned bouquet styled for sweet, minimalist gifting.\n\nInclusions:\nPaired blush focal blooms\nLight filler accents\nClassic wrap and ribbon finish",
+      "images": [
+        "blush-pair-bouquet-p280.jpg"
+      ],
+      "options": {
+        "colors": [
+          "Blush Pink",
+          "Peach",
+          "White"
+        ],
+        "wraps": [
+          "Soft Matte Wrap",
+          "Transparent Wrap"
+        ],
+        "ribbons": [
+          "Blush Ribbon",
+          "White Ribbon"
+        ]
+      },
+      "variants": [
+        {
+          "id": "std",
+          "label": "Standard — ₱280",
+          "price": 280,
+          "short": "Standard"
+        }
+      ]
+    },
+    "daisies-round-bouquet": {
+      "id": "daisies-round-bouquet",
+      "title": "Daisies Round Bouquet",
+      "description": "A cheerful round daisy bouquet with fresh color variations by photo.\n\nInclusions:\n30 pcs option: round daisy arrangement\n40 pcs+ option: fuller round daisy arrangement\nBouquet wrap and ribbon",
+      "images": [
+        "daisies-round-bouquent-30pcs-p400-40pcs-p450-01.jpg",
+        "daisies-round-bouquent-30pcs-p400-40pcs-p450-02.jpg",
+        "daisies-round-bouquent-30pcs-p400-40pcs-p450-03.jpg",
+        "daisies-round-bouquent-30pcs-p400-40pcs-p450-04.jpg"
+      ],
+      "variants": [
+        {
+          "id": "30pcs",
+          "label": "30 pcs — ₱400",
+          "price": 400,
+          "short": "30 pcs"
+        },
+        {
+          "id": "40pcs",
+          "label": "40 pcs+ — ₱450",
+          "price": 450,
+          "short": "40 pcs+"
+        }
+      ],
+      "options": {
+        "colors": [
+          "White Daisy",
+          "Yellow Daisy",
+          "Mixed Daisy"
+        ],
+        "wraps": [
+          "Round Kraft",
+          "Round Korean Wrap"
+        ],
+        "ribbons": [
+          "White Ribbon",
+          "Pink Ribbon"
+        ]
+      }
+    },
+    "duo-tulips-bouquet": {
+      "id": "duo-tulips-bouquet",
+      "title": "Duo Tulips Bouquet",
+      "description": "A compact duo tulip bouquet that highlights clean color pairings.\n\nInclusions:\nTulip duo stems\nMinimal filler styling\nWrap and ribbon",
+      "images": [
+        "duo-tulips-bouquet-p200-01.jpg",
+        "duo-tulips-bouquet-p200-02.jpg"
+      ],
+      "options": {
+        "colors": [
+          "Pink + White",
+          "Purple + White",
+          "Red + White"
+        ],
+        "wraps": [
+          "Kraft Wrap",
+          "Mesh Wrap"
+        ],
+        "ribbons": [
+          "White Ribbon",
+          "Red Ribbon"
+        ]
+      },
+      "variants": [
+        {
+          "id": "std",
+          "label": "Standard — ₱200",
+          "price": 200,
+          "short": "Standard"
+        }
+      ]
+    },
+    "glowbloom-bouquet": {
+      "id": "glowbloom-bouquet",
+      "title": "GlowBloom Bouquet",
+      "description": "A premium arranged bouquet with rich tones and a full presentation look.\n\nInclusions:\nMixed premium blooms\nComplementary fillers\nPremium wrap and ribbon",
+      "images": [
+        "glowbloom-bouquet-p1000-01.jpg",
+        "glowbloom-bouquet-p1000-02.jpg"
+      ],
+      "variants": [
+        {
+          "id": "std",
+          "label": "Standard — ₱1,000",
+          "price": 1000,
+          "short": "Standard"
+        }
+      ]
+    },
+    "kaia-bouquet": {
+      "id": "kaia-bouquet",
+      "title": "Kaia Bouquet",
+      "description": "An elegant mixed bouquet with balanced texture and soft color layering.\n\nInclusions:\nMixed feature blooms\nSeasonal fillers\nSignature wrap and ribbon",
+      "images": [
+        "kaia-bouquet-p750.jpg"
+      ],
+      "variants": [
+        {
+          "id": "std",
+          "label": "Standard — ₱750",
+          "price": 750,
+          "short": "Standard"
+        }
+      ]
+    },
+    "lilies-round-bouquet": {
+      "id": "lilies-round-bouquet",
+      "title": "Lilies Round Bouquet",
+      "description": "A round lily arrangement with clean structure and graceful petal volume.\n\nInclusions:\nLily stems\nSoft supporting fillers\nRound bouquet wrap and ribbon",
+      "images": [
+        "lilies-round-bouquet-p850-01.jpg",
+        "lilies-round-bouquet-p850-02.jpg"
+      ],
+      "variants": [
+        {
+          "id": "std",
+          "label": "Standard — ₱850",
+          "price": 850,
+          "short": "Standard"
+        }
+      ]
+    },
+    "lily-mesh-bouquet": {
+      "id": "lily-mesh-bouquet",
+      "title": "Lily Mesh Bouquet",
+      "description": "A mesh-wrapped lily bouquet.\n\nInclusions:\nLily stems\nMesh wrap style\nRibbon tie",
+      "images": [
+        "llly-mesh-bouquet-p180-01.jpg",
+        "llly-mesh-bouquet-p180-02.jpg",
+        "llly-mesh-bouquet-p180-03.jpg",
+        "llly-mesh-bouquet-p180-04.jpg"
+      ],
+      "variants": [
+        {
+          "id": "each",
+          "label": "Each — ₱180",
+          "price": 180,
+          "short": "Each"
+        }
+      ]
+    },
+    "purple-mix-flower-bouquet": {
+      "id": "purple-mix-flower-bouquet",
+      "title": "Purple Mix Flower Bouquet",
+      "description": "A premium purple-themed mixed bouquet with layered texture and volume.\n\nInclusions:\n12pcs Lilies\n10pcs Spring Fillers\n5pcs Small Daisy\n5pcs Lavender",
+      "images": [
+        "purple-mix-flower-bouquet-p1600-01.jpg"
+      ],
+      "variants": [
+        {
+          "id": "std",
+          "label": "Standard — ₱1,600",
+          "price": 1600,
+          "short": "Standard"
+        }
+      ]
+    },
+    "single-tulip": {
+      "id": "single-tulip",
+      "title": "Single Tulip",
+      "description": "A simple tulip option for single gifting or small bundle orders.\n\nInclusions:\n1 pc option: single tulip stem\n3 pcs option: tulip trio bundle\nBasic wrap finish",
+      "images": [
+        "single-tulip-1pc-p40-3pcs-p100-01.jpg",
+        "single-tulip-1pc-p40-3pcs-p100-02.jpg",
+        "single-tulip-1pc-p40-3pcs-p100-03.jpg"
+      ],
+      "options": {
+        "colors": [
+          "Pink",
+          "Red",
+          "Purple",
+          "Yellow",
+          "White"
+        ],
+        "wraps": [
+          "No Wrap",
+          "Simple Wrap"
+        ],
+        "ribbons": [
+          "No Ribbon",
+          "White Ribbon"
+        ]
+      },
+      "variants": [
+        {
+          "id": "1pc",
+          "label": "1 pc — ₱40",
+          "price": 40,
+          "short": "1 pc"
+        },
+        {
+          "id": "3pcs",
+          "label": "3 pcs — ₱100",
+          "price": 100,
+          "short": "3 pcs"
+        }
+      ]
+    },
+    "single-tulip-bouquet": {
+      "id": "single-tulip-bouquet",
+      "title": "Single Tulip Bouquet",
+      "description": "A single-tulip bouquet series with multiple photo color/style variations.\n\nInclusions:\nTulip stem bouquet\nDecorative wrap\nRibbon tie",
+      "images": [
+        "single-tulip-bouquet-p120-01.jpg",
+        "single-tulip-bouquet-p120-02.jpg",
+        "single-tulip-bouquet-p120-03.jpg",
+        "single-tulip-bouquet-p120-04.jpg",
+        "single-tulip-bouquet-p120-05.jpg",
+        "single-tulip-bouquet-p120-06.jpg",
+        "single-tulip-bouquet-p120-07.jpg",
+        "single-tulip-bouquet-p120-08.jpg",
+        "single-tulip-bouquet-p120-09.jpg"
+      ],
+      "options": {
+        "colors": [
+          "Pink",
+          "White",
+          "Purple",
+          "Mixed"
+        ],
+        "wraps": [
+          "Mesh Wrap",
+          "Korean Wrap",
+          "Kraft Wrap"
+        ],
+        "ribbons": [
+          "White Ribbon",
+          "Pink Ribbon",
+          "Lavender Ribbon"
+        ]
+      },
+      "variants": [
+        {
+          "id": "each",
+          "label": "Each — ₱120",
+          "price": 120,
+          "short": "Each"
+        }
+      ]
+    },
+    "sophie-bouquet": {
+      "id": "sophie-bouquet",
+      "title": "Sophie Bouquet",
+      "description": "A balanced mixed bouquet suited for birthdays, gratitude, and everyday surprises.\n\nInclusions:\n3pcs tulips\n2 lilies\n2 fillers\n3 daisies",
+      "images": [
+        "sophie-bouquet-p450.jpg"
+      ],
+      "variants": [
+        {
+          "id": "std",
+          "label": "Standard — ₱450",
+          "price": 450,
+          "short": "Standard"
+        }
+      ]
+    },
+    "sweet-tulip-bouquet": {
+      "id": "sweet-tulip-bouquet",
+      "title": "Sweet Tulip Bouquet",
+      "description": "A sweet tulip-forward bouquet with fuller styling and two visual options.\n\nInclusions:\nTulip stems\nAccent fillers\nBouquet wrap and ribbon",
+      "images": [
+        "sweet-tulip-bouquet-p500-01.jpg",
+        "sweet-tulip-bouquet-p500-02.jpg"
+      ],
+      "variants": [
+        {
+          "id": "std",
+          "label": "Standard — ₱500",
+          "price": 500,
+          "short": "Standard"
+        }
+      ]
+    }
+  }
+}

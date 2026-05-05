@@ -1,0 +1,26 @@
+{
+  "notes": [
+    "Passwords are managed by Firebase Authentication, not Realtime Database.",
+    "Create these admin users in Firebase Authentication with password admin123."
+  ],
+  "adminEmails": [
+    "mianongalilee@gmail.com",
+    "almarionestine@gmail.com"
+  ],
+  "profilesToSeedAfterAuthCreate": {
+    "replaceWithUid1": {
+      "uid": "replaceWithUid1",
+      "fullName": "Admin User 1",
+      "email": "mianongalilee@gmail.com",
+      "phone": "",
+      "role": "admin"
+    },
+    "replaceWithUid2": {
+      "uid": "replaceWithUid2",
+      "fullName": "Admin User 2",
+      "email": "almarionestine@gmail.com",
+      "phone": "",
+      "role": "admin"
+    }
+  }
+}

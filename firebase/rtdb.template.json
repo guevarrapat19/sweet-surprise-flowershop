@@ -1,0 +1,79 @@
+{
+  "profiles": {
+    "sampleUid123": {
+      "uid": "sampleUid123",
+      "fullName": "Sample Customer",
+      "email": "sample@email.com",
+      "phone": "09171234567",
+      "role": "user",
+      "createdAt": "2026-05-05T10:00:00.000Z"
+    }
+  },
+  "orders": {
+    "sampleUid123": {
+      "SSF-20260505-ABCD": {
+        "orderRef": "SSF-20260505-ABCD",
+        "placedAt": "2026-05-05T10:30:00.000Z",
+        "account": {
+          "uid": "sampleUid123",
+          "email": "sample@email.com",
+          "role": "user"
+        },
+        "customer": {
+          "name": "Sample Customer",
+          "email": "sample@email.com",
+          "phone": "09171234567",
+          "notes": ""
+        },
+        "deliveryAddress": {
+          "regionCode": "130000000",
+          "region": "National Capital Region (NCR)",
+          "province": "National Capital Region",
+          "city": "City of Manila",
+          "barangay": "Barangay 1",
+          "street": "123 Sample Street"
+        },
+        "payment": "cod",
+        "ewalletRef": "",
+        "lines": [],
+        "productSubtotal": 0,
+        "deliveryFee": 0,
+        "total": 0
+      }
+    }
+  },
+  "orders_by_ref": {
+    "SSF-20260505-ABCD": {
+      "orderRef": "SSF-20260505-ABCD",
+      "account": {
+        "uid": "sampleUid123",
+        "email": "sample@email.com",
+        "role": "user"
+      }
+    }
+  },
+  "products": {
+    "big-sunflower-bouquet": {
+      "id": "big-sunflower-bouquet",
+      "title": "Big Sunflower Bouquet",
+      "description": "A bold sunflower bouquet.\n\nInclusions:\nSunflower stems\nSeasonal fillers\nPremium bouquet wrap and ribbon",
+      "images": [
+        "big-sunflower-bouquet-p1000-01.jpg",
+        "big-sunflower-bouquet-p1000-02.jpg"
+      ],
+      "options": {
+        "colors": ["Yellow", "Orange", "Mixed Warm"],
+        "wraps": ["Kraft Wrap", "Korean Wrap"],
+        "ribbons": ["Cream Ribbon", "Gold Ribbon"]
+      },
+      "variants": [
+        {
+          "id": "std",
+          "label": "Standard — ₱1,000",
+          "price": 1000,
+          "short": "Standard"
+        }
+      ]
+    }
+  }
+}
