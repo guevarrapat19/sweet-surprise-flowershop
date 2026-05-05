@@ -37,6 +37,7 @@
     BLOOM50: { type: "fixed", value: 50 },
   };
   var activePromo = null;
+  var LEGAL_VERSION = "SSF-LEGAL-v1.0-2026-05-05";
 
   function formatPHP(n) {
     return "₱" + n.toLocaleString("en-PH");
@@ -398,6 +399,23 @@
     return Math.round(promo.value || 0);
   }
 
+  function promoValidationPack(code, paymentMethod, productSubtotal) {
+    var key = String(code || "").trim().toUpperCase();
+    var promo = PROMO_CODES[key];
+    if (!promo) return { ok: false, reason: "Promo code not found." };
+    var now = new Date();
+    if (promo.active === false) return { ok: false, reason: "Promo is inactive." };
+    if (promo.startAt && now < new Date(promo.startAt)) return { ok: false, reason: "Promo schedule has not started." };
+    if (promo.endAt && now > new Date(promo.endAt)) return { ok: false, reason: "Promo has expired." };
+    if (Number(promo.minSubtotal || 0) > Number(productSubtotal || 0)) return { ok: false, reason: "Minimum subtotal not reached." };
+    if (Array.isArray(promo.allowedPayments) && promo.allowedPayments.length) {
+      if (promo.allowedPayments.indexOf(String(paymentMethod || "").toLowerCase()) === -1) {
+        return { ok: false, reason: "Promo not allowed for selected payment method." };
+      }
+    }
+    return { ok: true, promo: promo, key: key };
+  }
+
   function makeOrderRef() {
     var d = new Date();
     var y = d.getFullYear();
@@ -502,6 +520,23 @@
           return p && p.id && p.title && Array.isArray(p.images) && Array.isArray(p.variants);
         });
         if (cleaned.length) PRODUCTS = cleaned.map(normalizeProductRecord);
+      })
+      .catch(function () {});
+  }
+
+  function loadPromosFromRealtimeDb() {
+    if (!firebaseReady || !fbDb) return Promise.resolve();
+    return fbDb
+      .ref("promos")
+      .get()
+      .then(function (snap) {
+        if (!snap.exists()) return;
+        var raw = snap.val() || {};
+        var mapped = {};
+        Object.keys(raw).forEach(function (k) {
+          mapped[String(k).toUpperCase()] = raw[k];
+        });
+        if (Object.keys(mapped).length) PROMO_CODES = mapped;
       })
       .catch(function () {});
   }
@@ -1265,7 +1300,10 @@
       var prodSub = cartTotal(getCart());
       var discountRow = panel.querySelector(".js-sub-discount");
       var grandRow = panel.querySelector(".js-grand-total");
-      var discount = activePromo ? getPromoDiscountAmount(activePromo, prodSub) : 0;
+      var payMethod = checkoutForm.querySelector('input[name="payment"]:checked');
+      var selectedPay = payMethod ? payMethod.value : "cod";
+      var p = activePromo ? promoValidationPack(activePromo, selectedPay, prodSub) : { ok: false };
+      var discount = p.ok ? getPromoDiscountAmount(activePromo, prodSub) : 0;
       discount = Math.min(discount, prodSub);
       if (discountRow) discountRow.textContent = formatPHP(discount);
       if (grandRow) grandRow.textContent = formatPHP(prodSub - discount + Math.max(0, Number(deliveryFee || 0)));
@@ -1290,8 +1328,17 @@
           updateCheckoutGrandWithPromo(checkoutAddrCtl && checkoutAddrCtl.getTotals ? checkoutAddrCtl.getTotals().deliveryFee : 0);
           return;
         }
-        activePromo = key;
-        if (promoFeedback) promoFeedback.textContent = "Promo applied: " + key;
+        var payMethod = checkoutForm.querySelector('input[name="payment"]:checked');
+        var selectedPay = payMethod ? payMethod.value : "cod";
+        var result = promoValidationPack(key, selectedPay, cartTotal(getCart()));
+        if (!result.ok) {
+          activePromo = null;
+          if (promoFeedback) promoFeedback.textContent = result.reason;
+          updateCheckoutGrandWithPromo(checkoutAddrCtl && checkoutAddrCtl.getTotals ? checkoutAddrCtl.getTotals().deliveryFee : 0);
+          return;
+        }
+        activePromo = result.key;
+        if (promoFeedback) promoFeedback.textContent = "Promo applied: " + result.key;
         updateCheckoutGrandWithPromo(checkoutAddrCtl && checkoutAddrCtl.getTotals ? checkoutAddrCtl.getTotals().deliveryFee : 0);
       });
     }
@@ -1325,7 +1372,8 @@
 
       var prodSub = cartTotal(getCart());
       var deliveryFee = feePack.deliveryFee;
-      var discount = activePromo ? getPromoDiscountAmount(activePromo, prodSub) : 0;
+      var promoPack = activePromo ? promoValidationPack(activePromo, pay, prodSub) : { ok: false };
+      var discount = promoPack.ok ? getPromoDiscountAmount(activePromo, prodSub) : 0;
       discount = Math.min(discount, prodSub);
       var grandNum = prodSub - discount + deliveryFee;
       var grandStr = grandNum.toLocaleString("en-PH");
@@ -1383,8 +1431,21 @@
           street: (data.get("addr_street") || "").trim(),
         },
         lines: getCart(),
-        promoCode: activePromo || "",
+        promoCode: promoPack.ok ? activePromo : "",
         discountAmount: discount,
+        agreement: {
+          accepted: true,
+          acceptedAt: new Date().toISOString(),
+          legalVersion: LEGAL_VERSION,
+          termsVersion: "SSF-LEGAL-v1.0",
+          privacyVersion: "SSF-PRIVACY-v1.0",
+          refundVersion: "SSF-REFUND-v1.0",
+          policyRecords: {
+            termsUrl: "terms.html",
+            privacyUrl: "privacy.html",
+            refundUrl: "refund-policy.html",
+          },
+        },
         productSubtotal: prodSub,
         deliveryFee: deliveryFee,
         total: grandNum,
@@ -2028,6 +2089,8 @@
   initReceiptUi();
   enforceNumericInput(document);
   loadProductsFromRealtimeDb().then(function () {
+    return loadPromosFromRealtimeDb();
+  }).then(function () {
     initShowcaseCarousel();
     initDiscountCarousel();
     if (document.getElementById("products") && document.getElementById("product-card-template")) {

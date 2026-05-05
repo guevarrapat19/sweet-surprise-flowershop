@@ -319,6 +319,158 @@
     }
   }
 
+  function isoFromLocalDatetime(value) {
+    if (!value) return "";
+    var d = new Date(value);
+    if (isNaN(d.getTime())) return "";
+    return d.toISOString();
+  }
+
+  function localDatetimeFromIso(iso) {
+    if (!iso) return "";
+    var d = new Date(iso);
+    if (isNaN(d.getTime())) return "";
+    var yyyy = d.getFullYear();
+    var mm = String(d.getMonth() + 1).padStart(2, "0");
+    var dd = String(d.getDate()).padStart(2, "0");
+    var hh = String(d.getHours()).padStart(2, "0");
+    var mi = String(d.getMinutes()).padStart(2, "0");
+    return yyyy + "-" + mm + "-" + dd + "T" + hh + ":" + mi;
+  }
+
+  function promoCardHtml(promo) {
+    var payments = Array.isArray(promo.allowedPayments) ? promo.allowedPayments.join(", ").toUpperCase() : "ALL";
+    return (
+      '<article class="order-card">' +
+      '<div class="order-card-top"><strong>' +
+      promo.code +
+      "</strong><span class='status-pill " +
+      (promo.active ? "status-approved" : "status-pending") +
+      "'>" +
+      (promo.active ? "Active" : "Inactive") +
+      "</span></div>" +
+      "<p class='order-meta muted small'>" +
+      (promo.type === "percent" ? promo.value + "% OFF" : "₱" + Number(promo.value || 0) + " OFF") +
+      " • Min subtotal: ₱" +
+      Number(promo.minSubtotal || 0) +
+      " • Payments: " +
+      payments +
+      "</p>" +
+      "<p class='order-meta muted small'>Start: " +
+      (promo.startAt || "Anytime") +
+      " • End: " +
+      (promo.endAt || "No end") +
+      "</p>" +
+      '<div class="order-actions">' +
+      '<button class="ghost js-promo-edit" data-code="' + promo.code + '">Edit</button>' +
+      '<button class="ghost js-promo-toggle" data-code="' + promo.code + '" data-active="' + (promo.active ? "1" : "0") + '">' +
+      (promo.active ? "Disable" : "Enable") +
+      "</button>" +
+      '<button class="ghost js-promo-delete" data-code="' + promo.code + '">Delete</button>' +
+      "</div></article>"
+    );
+  }
+
+  async function loadPromosAdmin() {
+    if (currentPage !== "admin" || !currentUser || currentUser.role !== "admin") return;
+    var host = document.getElementById("promo-list");
+    var form = document.getElementById("promo-form");
+    if (!host || !form) return;
+    var snap = await fbDb.ref("promos").get();
+    var raw = snap.exists() ? snap.val() : {};
+    var promos = Object.keys(raw || {}).map(function (k) {
+      var p = raw[k] || {};
+      return Object.assign({ code: k, active: true, type: "percent", value: 10, minSubtotal: 0, allowedPayments: ["cod", "gcash", "maya"] }, p);
+    });
+    promos.sort(function (a, b) {
+      return String(a.code).localeCompare(String(b.code));
+    });
+    host.innerHTML = promos.length ? promos.map(promoCardHtml).join("") : '<p class="muted small">No promos yet.</p>';
+
+    host.querySelectorAll(".js-promo-edit").forEach(function (btn) {
+      btn.addEventListener("click", function () {
+        var code = btn.getAttribute("data-code");
+        var p = promos.find(function (x) {
+          return x.code === code;
+        });
+        if (!p) return;
+        form.querySelector('[name="code"]').value = p.code || "";
+        form.querySelector('[name="type"]').value = p.type || "percent";
+        form.querySelector('[name="value"]').value = p.value || "";
+        form.querySelector('[name="minSubtotal"]').value = p.minSubtotal || "";
+        form.querySelector('[name="startAt"]').value = localDatetimeFromIso(p.startAt || "");
+        form.querySelector('[name="endAt"]').value = localDatetimeFromIso(p.endAt || "");
+        form.querySelector('[name="active"]').checked = !!p.active;
+        var allow = Array.isArray(p.allowedPayments) ? p.allowedPayments : [];
+        form.querySelector('[name="allow_cod"]').checked = allow.indexOf("cod") !== -1;
+        form.querySelector('[name="allow_gcash"]').checked = allow.indexOf("gcash") !== -1;
+        form.querySelector('[name="allow_maya"]').checked = allow.indexOf("maya") !== -1;
+      });
+    });
+
+    host.querySelectorAll(".js-promo-toggle").forEach(function (btn) {
+      btn.addEventListener("click", async function () {
+        var code = btn.getAttribute("data-code");
+        var active = btn.getAttribute("data-active") === "1";
+        await fbDb.ref("promos/" + code + "/active").set(!active);
+        notify("Promo updated.");
+        loadPromosAdmin();
+      });
+    });
+
+    host.querySelectorAll(".js-promo-delete").forEach(function (btn) {
+      btn.addEventListener("click", async function () {
+        var code = btn.getAttribute("data-code");
+        if (!confirm("Delete promo " + code + "?")) return;
+        await fbDb.ref("promos/" + code).remove();
+        notify("Promo deleted.");
+        loadPromosAdmin();
+      });
+    });
+  }
+
+  function initPromoForm() {
+    if (currentPage !== "admin") return;
+    var form = document.getElementById("promo-form");
+    if (!form) return;
+    form.addEventListener("submit", async function (ev) {
+      ev.preventDefault();
+      if (!currentUser || currentUser.role !== "admin") {
+        notify("Admin account required.");
+        return;
+      }
+      var data = new FormData(form);
+      var code = String(data.get("code") || "").trim().toUpperCase();
+      if (!code) {
+        notify("Promo code is required.");
+        return;
+      }
+      var allowedPayments = [];
+      if (data.get("allow_cod")) allowedPayments.push("cod");
+      if (data.get("allow_gcash")) allowedPayments.push("gcash");
+      if (data.get("allow_maya")) allowedPayments.push("maya");
+      if (!allowedPayments.length) {
+        notify("Select at least one allowed payment.");
+        return;
+      }
+      var payload = {
+        code: code,
+        type: String(data.get("type") || "percent"),
+        value: Number(data.get("value") || 0),
+        minSubtotal: Number(data.get("minSubtotal") || 0),
+        startAt: isoFromLocalDatetime(String(data.get("startAt") || "")),
+        endAt: isoFromLocalDatetime(String(data.get("endAt") || "")),
+        active: !!data.get("active"),
+        allowedPayments: allowedPayments,
+        updatedAt: new Date().toISOString(),
+      };
+      await fbDb.ref("promos/" + code).set(payload);
+      notify("Promo saved.");
+      form.reset();
+      loadPromosAdmin();
+    });
+  }
+
   function boot() {
     if (!initFirebase()) return;
     fbAuth.onAuthStateChanged(async function (u) {
@@ -337,7 +489,11 @@
       guardRole();
 
       if (currentPage === "user") loadUserOrders();
-      if (currentPage === "admin" && currentUser.role === "admin") loadAdminOrders();
+      if (currentPage === "admin" && currentUser.role === "admin") {
+        initPromoForm();
+        loadPromosAdmin();
+        loadAdminOrders();
+      }
       if (currentPage === "rider" && currentUser.role === "rider") loadRiderOrders();
     });
   }

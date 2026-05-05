@@ -25,6 +25,10 @@
     "products": {
       ".read": true,
       ".write": "auth != null && (auth.token.email === 'mianongalilee@gmail.com' || auth.token.email === 'almarionestine@gmail.com')"
+    },
+    "promos": {
+      ".read": true,
+      ".write": "auth != null && (auth.token.email === 'mianongalilee@gmail.com' || auth.token.email === 'almarionestine@gmail.com')"
     }
   }
 }
