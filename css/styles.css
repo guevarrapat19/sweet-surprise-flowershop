@@ -1014,3 +1014,44 @@ button.full {
 .product-admin-meta {
   margin: 0.25rem 0 0;
 }
+
+.receipt-dialog {
+  width: min(560px, calc(100% - 2rem));
+}
+
+.receipt-content {
+  margin-top: 0.65rem;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: #fffdfc;
+  padding: 0.75rem;
+}
+
+.receipt-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  margin: 0.35rem 0;
+}
+
+.receipt-lines {
+  margin: 0.5rem 0 0;
+  padding-left: 1rem;
+  color: var(--muted);
+}
+
+.checkout-promo-box {
+  margin-top: 0.65rem;
+  padding: 0.65rem;
+  border: 1px dashed var(--border);
+  border-radius: 10px;
+}
+
+.checkout-promo-box .ghost {
+  margin-top: 0.5rem;
+}
+
+.terms-row {
+  margin-top: 0.75rem;
+  align-items: flex-start;
+}

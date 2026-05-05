@@ -31,7 +31,7 @@
         <nav class="nav" aria-label="Primary">
           <a href="index.html#shop">Shop</a>
           <a href="about.html">About</a>
-          <button type="button" class="ghost auth-btn" id="my-orders-open" hidden>My Orders</button>
+          <button type="button" class="ghost auth-btn" id="my-orders-open" hidden>My Orders Dashboard</button>
           <button type="button" class="ghost auth-btn" id="admin-dashboard-open" hidden>Admin Dashboard</button>
           <button type="button" class="ghost auth-btn" id="auth-open">Login</button>
           <button type="button" class="ghost auth-btn" id="auth-logout" hidden>Logout</button>
@@ -104,6 +104,7 @@
           <div class="dashboard-card">
             <h3>Add Product</h3>
             <form id="admin-product-form" class="dashboard-form">
+              <input name="product_id" type="hidden" />
               <label>
                 Product title
                 <input name="title" type="text" required maxlength="140" />
@@ -114,14 +115,15 @@
               </label>
               <label>
                 Price (PHP)
-                <input name="price" type="number" min="1" step="1" required />
+                <input name="price" type="number" min="1" step="1" required data-numeric-only="true" />
               </label>
               <label>
                 Image filename (inside assets/products)
                 <input name="image" type="text" required placeholder="sample-product.jpg" />
               </label>
               <div class="checkout-actions">
-                <button type="submit" class="primary">Add product</button>
+                <button type="submit" class="primary" id="admin-product-submit">Save product</button>
+                <button type="button" class="ghost" id="admin-product-reset">New product</button>
               </div>
             </form>
             <h3 class="admin-subhead">Product Controls</h3>
@@ -173,7 +175,7 @@
         </label>
         <label>
           Mobile (numbers only)
-          <input name="phone" type="tel" inputmode="numeric" pattern="\d*" maxlength="11" required autocomplete="tel" placeholder="09171234567" />
+          <input name="phone" type="tel" inputmode="numeric" pattern="\d*" maxlength="11" required autocomplete="tel" placeholder="09171234567" data-numeric-only="true" />
         </label>
         <fieldset class="checkout-fieldset" id="delivery-address-fs">
           <legend>Delivery address (Philippines)</legend>
@@ -245,6 +247,10 @@
             <span class="js-sub-products">₱0</span>
           </div>
           <div class="checkout-tally-row">
+            <span>Promotion discount</span>
+            <span class="js-sub-discount">₱0</span>
+          </div>
+          <div class="checkout-tally-row">
             <span>Estimated delivery fee</span>
             <span class="js-sub-delivery">—</span>
           </div>
@@ -254,6 +260,18 @@
           </div>
           <p class="muted small checkout-total-note js-delivery-note"></p>
         </div>
+        <div class="checkout-promo-box">
+          <label>
+            Promo code (optional)
+            <input name="promo_code" type="text" maxlength="40" placeholder="e.g. SWEET10" />
+          </label>
+          <button type="button" class="ghost" id="promo-apply-btn">Apply promo</button>
+          <p class="muted small" id="promo-feedback"></p>
+        </div>
+        <label class="check-row terms-row">
+          <input type="checkbox" name="agreement" required />
+          <span>I agree to the order terms, delivery policy, and payment confirmation process.</span>
+        </label>
         <div class="checkout-actions">
           <button type="submit" class="primary">Place order</button>
           <button type="button" class="ghost" id="checkout-cancel">Cancel</button>
@@ -307,7 +325,7 @@
         </label>
         <label class="auth-register-only" hidden>
           Mobile (11 digits)
-          <input name="phone" type="tel" inputmode="numeric" pattern="\d*" maxlength="11" autocomplete="tel" />
+          <input name="phone" type="tel" inputmode="numeric" pattern="\d*" maxlength="11" autocomplete="tel" data-numeric-only="true" />
         </label>
         <label>
           Password
@@ -323,6 +341,17 @@
           <button type="button" class="auth-switch-btn" id="auth-switch-btn">Register here</button>
         </p>
       </form>
+    </div>
+
+    <div class="dialog-backdrop" id="receipt-backdrop" hidden></div>
+    <div class="dialog receipt-dialog" id="receipt-dialog" role="dialog" aria-modal="true" aria-labelledby="receipt-title" hidden>
+      <h2 id="receipt-title">Order Receipt</h2>
+      <p class="muted small">Thank you for ordering. Please wait for confirmation from our team.</p>
+      <div id="receipt-content" class="receipt-content"></div>
+      <div class="checkout-actions">
+        <button type="button" class="primary" id="receipt-open-orders">Open My Orders Dashboard</button>
+        <button type="button" class="ghost" id="receipt-close">Close</button>
+      </div>
     </div>
 
     <script>
@@ -343,5 +372,6 @@
     <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-analytics-compat.js"></script>
     <script src="js/ph-address.js"></script>
     <script src="js/app.js"></script>
+
   </body>
 </html>

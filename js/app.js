@@ -23,7 +23,13 @@
     PENDING: "pending",
     APPROVED: "approved",
     OUT_FOR_DELIVERY: "out_for_delivery",
+    DELIVERED: "delivered",
   };
+  var PROMO_CODES = {
+    SWEET10: { type: "percent", value: 10 },
+    BLOOM50: { type: "fixed", value: 50 },
+  };
+  var activePromo = null;
 
   function formatPHP(n) {
     return "₱" + n.toLocaleString("en-PH");
@@ -41,12 +47,14 @@
   function prettyStatus(status) {
     if (status === ORDER_STATUSES.APPROVED) return "Approved";
     if (status === ORDER_STATUSES.OUT_FOR_DELIVERY) return "Out for delivery";
+    if (status === ORDER_STATUSES.DELIVERED) return "Delivered";
     return "Pending approval";
   }
 
   function statusClass(status) {
     if (status === ORDER_STATUSES.APPROVED) return "status-approved";
     if (status === ORDER_STATUSES.OUT_FOR_DELIVERY) return "status-out-for-delivery";
+    if (status === ORDER_STATUSES.DELIVERED) return "status-approved";
     return "status-pending";
   }
 
@@ -355,6 +363,14 @@
     return lines.reduce(function (sum, l) {
       return sum + l.unitPrice * l.qty;
     }, 0);
+  }
+
+  function getPromoDiscountAmount(code, productSubtotal) {
+    var key = String(code || "").trim().toUpperCase();
+    var promo = PROMO_CODES[key];
+    if (!promo) return 0;
+    if (promo.type === "percent") return Math.round((productSubtotal * promo.value) / 100);
+    return Math.round(promo.value || 0);
   }
 
   function makeOrderRef() {
@@ -1142,6 +1158,10 @@
   if (checkoutForm) {
     var payInputs = checkoutForm.querySelectorAll('input[name="payment"]');
     var ewalletExtra = checkoutForm.querySelector(".checkout-ewallet-extra");
+    var promoInput = checkoutForm.querySelector('input[name="promo_code"]');
+    var promoApplyBtn = document.getElementById("promo-apply-btn");
+    var promoFeedback = document.getElementById("promo-feedback");
+    enforceNumericInput(checkoutForm);
 
     checkoutAddrCtl =
       typeof window.initPhilippinesAddressPickers === "function"
@@ -1167,10 +1187,42 @@
       if (ewalletExtra) ewalletExtra.hidden = m === "cod";
     }
 
+    function updateCheckoutGrandWithPromo(deliveryFee) {
+      var panel = document.getElementById("checkout-totals");
+      if (!panel) return;
+      var prodSub = cartTotal(getCart());
+      var discountRow = panel.querySelector(".js-sub-discount");
+      var grandRow = panel.querySelector(".js-grand-total");
+      var discount = activePromo ? getPromoDiscountAmount(activePromo, prodSub) : 0;
+      discount = Math.min(discount, prodSub);
+      if (discountRow) discountRow.textContent = formatPHP(discount);
+      if (grandRow) grandRow.textContent = formatPHP(prodSub - discount + Math.max(0, Number(deliveryFee || 0)));
+    }
+
     payInputs.forEach(function (el) {
       el.addEventListener("change", syncPaymentUi);
     });
     syncPaymentUi();
+    if (promoApplyBtn) {
+      promoApplyBtn.addEventListener("click", function () {
+        var key = String((promoInput && promoInput.value) || "").trim().toUpperCase();
+        if (!key) {
+          activePromo = null;
+          if (promoFeedback) promoFeedback.textContent = "No promo applied.";
+          updateCheckoutGrandWithPromo(checkoutAddrCtl && checkoutAddrCtl.getTotals ? checkoutAddrCtl.getTotals().deliveryFee : 0);
+          return;
+        }
+        if (!PROMO_CODES[key]) {
+          activePromo = null;
+          if (promoFeedback) promoFeedback.textContent = "Promo code not found.";
+          updateCheckoutGrandWithPromo(checkoutAddrCtl && checkoutAddrCtl.getTotals ? checkoutAddrCtl.getTotals().deliveryFee : 0);
+          return;
+        }
+        activePromo = key;
+        if (promoFeedback) promoFeedback.textContent = "Promo applied: " + key;
+        updateCheckoutGrandWithPromo(checkoutAddrCtl && checkoutAddrCtl.getTotals ? checkoutAddrCtl.getTotals().deliveryFee : 0);
+      });
+    }
 
     checkoutForm.addEventListener("submit", async function (ev) {
       ev.preventDefault();
@@ -1201,10 +1253,10 @@
 
       var prodSub = cartTotal(getCart());
       var deliveryFee = feePack.deliveryFee;
-      var grandNum = prodSub + deliveryFee;
+      var discount = activePromo ? getPromoDiscountAmount(activePromo, prodSub) : 0;
+      discount = Math.min(discount, prodSub);
+      var grandNum = prodSub - discount + deliveryFee;
       var grandStr = grandNum.toLocaleString("en-PH");
-      var prodStr = prodSub.toLocaleString("en-PH");
-      var feeStrNum = deliveryFee.toLocaleString("en-PH");
 
       var selRegion = checkoutForm.querySelector("#addr-region");
       var selProv = checkoutForm.querySelector("#addr-province");
@@ -1221,6 +1273,7 @@
         orderRef: orderRef,
         placedAt: new Date().toISOString(),
         status: ORDER_STATUSES.PENDING,
+        statusHistory: [{ status: ORDER_STATUSES.PENDING, at: new Date().toISOString() }],
         account: currentUser
           ? {
               uid: currentUser.uid || "",
@@ -1245,6 +1298,8 @@
           street: (data.get("addr_street") || "").trim(),
         },
         lines: getCart(),
+        promoCode: activePromo || "",
+        discountAmount: discount,
         productSubtotal: prodSub,
         deliveryFee: deliveryFee,
         total: grandNum,
@@ -1264,34 +1319,15 @@
       } catch (e) {}
 
       var follow = paymentFollowUp(pay, orderRef, grandStr);
-
-      var farExtra = feePack.farNote ? "\nNote: " + feePack.farNote + "\n" : "";
-
-      alert(
-        "Thank you, " +
-          snapshot.customer.name +
-          "!\n\n" +
-          "Order ref: " +
-          orderRef +
-          "\n" +
-          "Bouquets: ₱" +
-          prodStr +
-          "\n" +
-          "Delivery: ₱" +
-          feeStrNum +
-          farExtra +
-          "Total to pay: ₱" +
-          grandStr +
-          "\n\n" +
-          follow +
-          "\n\n" +
-          "This draft is saved in this browser only. For production, connect email/WhatsApp alerts or Firebase so staff see every order. Screenshot if you want a receipt copy."
-      );
+      notify("success", "Order placed. " + follow);
       clearCart();
       closeCheckout();
       form.reset();
+      activePromo = null;
+      if (promoFeedback) promoFeedback.textContent = "";
       syncPaymentUi();
       if (checkoutAddrCtl && checkoutAddrCtl.reset) checkoutAddrCtl.reset();
+      openReceiptDialog(snapshot, feePack);
     });
   }
 
@@ -1301,6 +1337,66 @@
     if (visible) {
       el.scrollIntoView({ behavior: "smooth", block: "start" });
     }
+  }
+
+  function enforceNumericInput(root) {
+    if (!root) return;
+    root.querySelectorAll('input[data-numeric-only="true"]').forEach(function (input) {
+      input.addEventListener("input", function () {
+        input.value = input.value.replace(/\D/g, "");
+      });
+    });
+  }
+
+  function closeReceiptDialog() {
+    var backdrop = document.getElementById("receipt-backdrop");
+    var dialog = document.getElementById("receipt-dialog");
+    if (backdrop) backdrop.hidden = true;
+    if (dialog) dialog.hidden = true;
+  }
+
+  function openReceiptDialog(snapshot, feePack) {
+    var backdrop = document.getElementById("receipt-backdrop");
+    var dialog = document.getElementById("receipt-dialog");
+    var host = document.getElementById("receipt-content");
+    if (!backdrop || !dialog || !host) return;
+    var lines = snapshot.lines || [];
+    var itemsHtml = lines
+      .map(function (line) {
+        return "<li>" + line.title + " x" + line.qty + " (" + formatPHP(line.unitPrice * line.qty) + ")</li>";
+      })
+      .join("");
+    var farText = feePack && feePack.farNote ? '<p class="muted small">Note: ' + feePack.farNote + "</p>" : "";
+    host.innerHTML =
+      '<div class="receipt-row"><strong>Order Ref</strong><span>' +
+      snapshot.orderRef +
+      "</span></div>" +
+      '<div class="receipt-row"><strong>Name</strong><span>' +
+      snapshot.customer.name +
+      "</span></div>" +
+      '<div class="receipt-row"><strong>Payment</strong><span>' +
+      String(snapshot.payment || "cod").toUpperCase() +
+      "</span></div>" +
+      '<div class="receipt-row"><strong>Bouquets</strong><span>' +
+      formatPHP(snapshot.productSubtotal || 0) +
+      "</span></div>" +
+      '<div class="receipt-row"><strong>Discount</strong><span>-' +
+      formatPHP(snapshot.discountAmount || 0) +
+      "</span></div>" +
+      '<div class="receipt-row"><strong>Delivery Fee</strong><span>' +
+      formatPHP(snapshot.deliveryFee || 0) +
+      "</span></div>" +
+      '<div class="receipt-row"><strong>Total</strong><strong>' +
+      formatPHP(snapshot.total || 0) +
+      "</strong></div>" +
+      '<p class="muted small">Status: Pending approval</p>' +
+      '<p class="muted small">Please wait for confirmation. We will contact you via your phone number and email once approved/out for delivery.</p>' +
+      '<ul class="receipt-lines">' +
+      itemsHtml +
+      "</ul>" +
+      farText;
+    backdrop.hidden = false;
+    dialog.hidden = false;
   }
 
   function renderOrderList(host, orders, includeActions) {
@@ -1371,6 +1467,16 @@
             updateOrderStatus(o, ORDER_STATUSES.OUT_FOR_DELIVERY);
           });
           actions.appendChild(shipBtn);
+        }
+        if (o.status === ORDER_STATUSES.OUT_FOR_DELIVERY) {
+          var deliveredBtn = document.createElement("button");
+          deliveredBtn.type = "button";
+          deliveredBtn.className = "ghost";
+          deliveredBtn.textContent = "Mark delivered";
+          deliveredBtn.addEventListener("click", function () {
+            updateOrderStatus(o, ORDER_STATUSES.DELIVERED);
+          });
+          actions.appendChild(deliveredBtn);
         }
         if (!actions.children.length) {
           var done = document.createElement("span");
@@ -1458,17 +1564,21 @@
       return;
     }
     var payload = Object.assign({}, order, { status: nextStatus });
+    var nextHistory = Array.isArray(order.statusHistory) ? order.statusHistory.slice() : [];
+    nextHistory.push({ status: nextStatus, at: new Date().toISOString() });
     try {
       if (firebaseReady && fbDb) {
         await fbDb.ref("orders_by_ref/" + order.orderRef + "/status").set(nextStatus);
+        await fbDb.ref("orders_by_ref/" + order.orderRef + "/statusHistory").set(nextHistory);
         if (order.account && order.account.uid) {
           await fbDb.ref("orders/" + order.account.uid + "/" + order.orderRef + "/status").set(nextStatus);
+          await fbDb.ref("orders/" + order.account.uid + "/" + order.orderRef + "/statusHistory").set(nextHistory);
         }
       }
       try {
         var local = JSON.parse(localStorage.getItem("ssf-orders-demo") || "[]");
         local = local.map(function (x) {
-          if (x && x.orderRef === order.orderRef) return Object.assign({}, x, { status: nextStatus });
+          if (x && x.orderRef === order.orderRef) return Object.assign({}, x, { status: nextStatus, statusHistory: nextHistory });
           return x;
         });
         localStorage.setItem("ssf-orders-demo", JSON.stringify(local));
@@ -1479,6 +1589,29 @@
     } catch (e) {
       notify("error", "Failed to update order status.");
     }
+  }
+
+  function resetAdminProductForm() {
+    var form = document.getElementById("admin-product-form");
+    var submitBtn = document.getElementById("admin-product-submit");
+    if (!form) return;
+    form.reset();
+    var idInput = form.querySelector('[name="product_id"]');
+    if (idInput) idInput.value = "";
+    if (submitBtn) submitBtn.textContent = "Save product";
+  }
+
+  function fillAdminProductForm(product) {
+    var form = document.getElementById("admin-product-form");
+    var submitBtn = document.getElementById("admin-product-submit");
+    if (!form || !product) return;
+    form.querySelector('[name="product_id"]').value = product.id || "";
+    form.querySelector('[name="title"]').value = product.title || "";
+    form.querySelector('[name="description"]').value = product.description || "";
+    form.querySelector('[name="price"]').value =
+      product.variants && product.variants[0] ? String(product.variants[0].price || "") : "";
+    form.querySelector('[name="image"]').value = product.images && product.images[0] ? product.images[0] : "";
+    if (submitBtn) submitBtn.textContent = "Update product";
   }
 
   async function addProductFromAdminForm(ev) {
@@ -1493,11 +1626,12 @@
     var description = String(data.get("description") || "").trim();
     var price = Number(data.get("price") || 0);
     var image = String(data.get("image") || "").trim();
+    var productId = String(data.get("product_id") || "").trim();
     if (!title || !description || !image || price <= 0) {
       notify("error", "Please complete all product fields.");
       return;
     }
-    var id = slugify(title) || "product-" + Date.now();
+    var id = productId || slugify(title) || "product-" + Date.now();
     var product = {
       id: id,
       title: title,
@@ -1508,17 +1642,32 @@
       isDeleted: false,
       variants: [{ id: "std", label: "Standard — " + formatPHP(price), price: price, short: "Standard" }],
     };
+    var existing = PRODUCTS.find(function (p) {
+      return p.id === id;
+    });
+    if (existing) {
+      product.hidden = !!existing.hidden;
+      product.outOfStock = !!existing.outOfStock;
+      product.isDeleted = !!existing.isDeleted;
+      if (existing.options) product.options = existing.options;
+    }
     try {
       if (firebaseReady && fbDb) {
         await fbDb.ref("products/" + id).set(product);
       }
-      PRODUCTS.push(normalizeProductRecord(product));
+      if (existing) {
+        PRODUCTS = PRODUCTS.map(function (p) {
+          return p.id === id ? normalizeProductRecord(product) : p;
+        });
+      } else {
+        PRODUCTS.push(normalizeProductRecord(product));
+      }
       renderProducts();
-      form.reset();
+      resetAdminProductForm();
       loadAdminProducts();
-      notify("success", "Product added: " + title);
+      notify("success", existing ? "Product updated: " + title : "Product added: " + title);
     } catch (e) {
-      notify("error", "Failed to add product.");
+      notify("error", "Failed to save product.");
     }
   }
 
@@ -1631,6 +1780,15 @@
         });
         actions.appendChild(restoreBtn);
       } else {
+        var editBtn = document.createElement("button");
+        editBtn.type = "button";
+        editBtn.className = "ghost";
+        editBtn.textContent = "Edit product";
+        editBtn.addEventListener("click", function () {
+          fillAdminProductForm(p);
+        });
+        actions.appendChild(editBtn);
+
         var hideBtn = document.createElement("button");
         hideBtn.type = "button";
         hideBtn.className = "ghost";
@@ -1685,6 +1843,7 @@
     var mySection = document.getElementById("my-orders-dashboard");
     var adminSection = document.getElementById("admin-dashboard");
     var productForm = document.getElementById("admin-product-form");
+    var productResetBtn = document.getElementById("admin-product-reset");
 
     if (myOpen) {
       myOpen.addEventListener("click", function () {
@@ -1716,6 +1875,27 @@
     if (productForm) {
       productForm.addEventListener("submit", addProductFromAdminForm);
     }
+    if (productResetBtn) {
+      productResetBtn.addEventListener("click", function () {
+        resetAdminProductForm();
+      });
+    }
+  }
+
+  function initReceiptUi() {
+    var closeBtn = document.getElementById("receipt-close");
+    var backdrop = document.getElementById("receipt-backdrop");
+    var openOrdersBtn = document.getElementById("receipt-open-orders");
+    var mySection = document.getElementById("my-orders-dashboard");
+    if (closeBtn) closeBtn.addEventListener("click", closeReceiptDialog);
+    if (backdrop) backdrop.addEventListener("click", closeReceiptDialog);
+    if (openOrdersBtn) {
+      openOrdersBtn.addEventListener("click", function () {
+        closeReceiptDialog();
+        setSectionVisible(mySection, true);
+        loadUserOrders();
+      });
+    }
   }
 
   var yr = document.getElementById("year");
@@ -1723,6 +1903,8 @@
 
   initAuthUi();
   initDashboards();
+  initReceiptUi();
+  enforceNumericInput(document);
   loadProductsFromRealtimeDb().then(function () {
     initShowcaseCarousel();
     if (document.getElementById("products") && document.getElementById("product-card-template")) {
