@@ -1433,9 +1433,9 @@
           privacyVersion: "SSF-PRIVACY-v1.0",
           refundVersion: "SSF-REFUND-v1.0",
           policyRecords: {
-            termsUrl: "terms.html",
-            privacyUrl: "privacy.html",
-            refundUrl: "refund-policy.html",
+            termsUrl: "legal.html#terms",
+            privacyUrl: "legal.html#privacy",
+            refundUrl: "legal.html#refund-policy",
           },
         },
         productSubtotal: prodSub,
