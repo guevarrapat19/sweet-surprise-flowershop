@@ -59,6 +59,11 @@
                 Image filename (inside assets/products)
                 <input name="image" type="text" required placeholder="sample-product.jpg" />
               </label>
+              <label>
+                Browse image (optional, fills filename only)
+                <input id="admin-product-image-file" type="file" accept="image/*" />
+              </label>
+              <img id="admin-product-image-preview" class="admin-product-thumb" alt="Product preview" hidden />
               <div class="checkout-actions">
                 <button type="submit" class="primary" id="admin-product-submit">Save product</button>
                 <button type="button" class="ghost" id="admin-product-reset">New product</button>

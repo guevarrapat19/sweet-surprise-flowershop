@@ -113,9 +113,19 @@
     return "assets/products/" + s;
   }
 
+  function slugify(text) {
+    return String(text || "")
+      .toLowerCase()
+      .trim()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-+|-+$/g, "")
+      .slice(0, 48);
+  }
+
   function rowHtml(o) {
     var customerName = (o.customer && o.customer.name) || "N/A";
     var customerEmail = (o.customer && o.customer.email) || "";
+    var riderLine = o.riderName ? " • Rider: " + o.riderName : "";
     return (
       '<article class="order-card">' +
       '<div class="order-card-top"><strong>' +
@@ -132,9 +142,33 @@
       String(o.payment || "cod").toUpperCase() +
       " • Total: " +
       formatPHP(o.total || 0) +
+      riderLine +
       "</p>" +
       "</article>"
     );
+  }
+
+  async function deleteOrderEverywhere(order) {
+    var ref = order && order.orderRef ? order.orderRef : "";
+    if (!ref) return;
+    try {
+      await fbDb.ref("orders_by_ref/" + ref).remove();
+    } catch (e) {}
+    if (order && order.account && order.account.uid) {
+      await fbDb.ref("orders/" + order.account.uid + "/" + ref).remove();
+      return;
+    }
+    try {
+      var allSnap = await fbDb.ref("orders").get();
+      var all = allSnap.exists() ? allSnap.val() : {};
+      var tasks = [];
+      Object.keys(all || {}).forEach(function (uid) {
+        if (all[uid] && all[uid][ref]) {
+          tasks.push(fbDb.ref("orders/" + uid + "/" + ref).remove());
+        }
+      });
+      await Promise.all(tasks);
+    } catch (e2) {}
   }
 
   async function loadRiders() {
@@ -414,6 +448,7 @@
       if (o.status === ORDER_STATUSES.RECEIVED_BY_CUSTOMER || o.status === ORDER_STATUSES.PAID_DELIVERY_SUCCESS) {
         actions += '<button class="ghost js-status" data-ref="' + o.orderRef + '" data-next="completed">Close order</button>';
       }
+      actions += '<button class="ghost js-delete-order" data-ref="' + o.orderRef + '">Delete order</button>';
       return rowHtml(o).replace("</article>", '<div class="order-actions">' + actions + "</div></article>");
     });
 
@@ -449,6 +484,19 @@
           assignedAt: new Date().toISOString(),
         });
         notify("Rider assigned.");
+        loadAdminOrders();
+      });
+    });
+    host.querySelectorAll(".js-delete-order").forEach(function (btn) {
+      btn.addEventListener("click", async function () {
+        var ref = btn.getAttribute("data-ref");
+        var order = orders.find(function (x) {
+          return x.orderRef === ref;
+        });
+        if (!order) return;
+        if (!confirm("Delete order " + ref + "? This cannot be undone.")) return;
+        await deleteOrderEverywhere(order);
+        notify("Order deleted.");
         loadAdminOrders();
       });
     });
@@ -830,8 +878,22 @@
     if (currentPage !== "admin") return;
     var form = document.getElementById("admin-product-form");
     var resetBtn = document.getElementById("admin-product-reset");
+    var fileInput = document.getElementById("admin-product-image-file");
+    var preview = document.getElementById("admin-product-image-preview");
     if (!form || form._ssfBound) return;
     form._ssfBound = true;
+    if (fileInput && !fileInput._ssfBound) {
+      fileInput._ssfBound = true;
+      fileInput.addEventListener("change", function () {
+        var f = fileInput.files && fileInput.files[0] ? fileInput.files[0] : null;
+        if (!f) return;
+        form.querySelector('[name="image"]').value = f.name;
+        if (preview) {
+          preview.src = URL.createObjectURL(f);
+          preview.hidden = false;
+        }
+      });
+    }
     form.addEventListener("submit", async function (ev) {
       ev.preventDefault();
       if (!currentUser || currentUser.role !== "admin") {
@@ -849,11 +911,15 @@
         return;
       }
       var payload = {
+        id: id || slugify(title),
         title: title,
         description: description,
         price: price,
         image: image,
+        images: [image],
+        variants: [{ id: "std", label: "Standard", price: price, short: "Standard" }],
       };
+      payload.variants[0].label = "Standard — " + formatPHP(price);
       try {
         if (id) {
           await fbDb.ref("products/" + id).update(payload);
@@ -881,6 +947,10 @@
       resetBtn.addEventListener("click", function () {
         form.reset();
         form.querySelector('[name="product_id"]').value = "";
+        if (preview) {
+          preview.hidden = true;
+          preview.removeAttribute("src");
+        }
       });
     }
   }
