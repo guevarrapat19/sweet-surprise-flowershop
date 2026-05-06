@@ -3,7 +3,7 @@
 
   var FIREBASE_CONFIG = window.SSF_FIREBASE_CONFIG || null;
   var ADMIN_EMAILS = ["mianongalilee@gmail.com", "almarionestine@gmail.com"];
-  var RIDER_EMAILS = ["rider@sweetsurprise.com", "rainierdelossantos@gmail.com", "jefferytangcuangco@gmail.com"];
+  var RIDER_EMAILS = ["rider@sweetsurprise.com", "rainierdelossantos@gmail.com", "rainierdelossantos4@gmail.com", "jefferytangcuangco@gmail.com"];
   var ORDER_STATUSES = {
     PENDING: "pending",
     AWAITING_PAYMENT_REVIEW: "awaiting_payment_review",
@@ -87,6 +87,14 @@
     );
     rec.price = Number(rec.price || 0);
     return rec;
+  }
+
+  function productImageSrc(image) {
+    var s = String(image || "").trim();
+    if (!s) return "assets/products/no-image.jpg";
+    if (/^https?:\/\//i.test(s)) return s;
+    if (s.indexOf("assets/") === 0) return s;
+    return "assets/products/" + s;
   }
 
   function rowHtml(o) {
@@ -322,8 +330,22 @@
       var snap = await fbDb.ref("orders_by_ref").get();
       raw = snap.exists() ? snap.val() : {};
     } catch (e) {
-      notify("Failed to load admin orders: " + (e && e.message ? e.message : "Unknown error"));
-      return;
+      var fallbackRaw = {};
+      try {
+        var byUserSnap = await fbDb.ref("orders").get();
+        var byUser = byUserSnap.exists() ? byUserSnap.val() : {};
+        Object.keys(byUser || {}).forEach(function (uid) {
+          var map = byUser[uid] || {};
+          Object.keys(map || {}).forEach(function (ref) {
+            if (!fallbackRaw[ref]) fallbackRaw[ref] = map[ref];
+          });
+        });
+        raw = fallbackRaw;
+        notify("Loaded admin orders using fallback source.");
+      } catch (e2) {
+        notify("Failed to load admin orders: " + (e2 && e2.message ? e2.message : "Unknown error"));
+        return;
+      }
     }
     var orders = Object.keys(raw || {}).map(function (k) {
       return raw[k];
@@ -484,6 +506,7 @@
     if (ordersLink) {
       ordersLink.hidden = !currentUser;
       ordersLink.href = role === "admin" ? "admin-orders.html" : role === "rider" ? "rider-orders.html" : "user-orders.html";
+      ordersLink.textContent = role === "admin" ? "Dashboard" : "Orders";
     }
     if (profileLink) profileLink.hidden = !currentUser;
     if (adminLink) adminLink.hidden = true;
@@ -683,6 +706,11 @@
           var flagText = flags.length ? " • " + flags.join(" • ") : "";
           return (
             '<article class="order-card">' +
+            '<img src="' +
+            productImageSrc(p.image) +
+            '" alt="' +
+            (p.title || "Product image") +
+            '" class="admin-product-thumb" loading="lazy" />' +
             '<div class="order-card-top"><strong>' +
             p.title +
             "</strong></div>" +

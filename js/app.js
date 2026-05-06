@@ -11,7 +11,7 @@
   var AUTH_KEY = "ssf-auth-local-v1";
   var FIREBASE_CONFIG = window.SSF_FIREBASE_CONFIG || null;
   var ADMIN_EMAILS = ["mianongalilee@gmail.com", "almarionestine@gmail.com"];
-  var RIDER_EMAILS = ["rider@sweetsurprise.com", "rainierdelossantos@gmail.com", "jefferytangcuangco@gmail.com"];
+  var RIDER_EMAILS = ["rider@sweetsurprise.com", "rainierdelossantos@gmail.com", "rainierdelossantos4@gmail.com", "jefferytangcuangco@gmail.com"];
   var ADMIN_PASSWORD = "admin123";
   var firebaseReady = false;
   var fbAuth = null;

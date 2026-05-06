@@ -1015,6 +1015,17 @@ button.full {
   margin: 0.25rem 0 0;
 }
 
+.admin-product-thumb {
+  width: 100%;
+  max-width: 220px;
+  height: 130px;
+  object-fit: cover;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  margin-bottom: 0.45rem;
+  background: #fff;
+}
+
 .receipt-dialog {
   width: min(560px, calc(100% - 2rem));
 }
