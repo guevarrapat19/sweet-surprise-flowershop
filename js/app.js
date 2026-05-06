@@ -7,7 +7,7 @@
    * Philippines e-wallet: put your shop’s receiving numbers here (no Firebase needed).
    * Customers see them after checkout. Replace placeholders before going live.
    */
-  var SHOP_GCASH_NUMBER = "09XX XXX XXXX";
+  var SHOP_GCASH_NUMBER = "09915697090";
   var AUTH_KEY = "ssf-auth-local-v1";
   var FIREBASE_CONFIG = window.SSF_FIREBASE_CONFIG || null;
   var ADMIN_EMAILS = ["mianongalilee@gmail.com", "almarionestine@gmail.com"];

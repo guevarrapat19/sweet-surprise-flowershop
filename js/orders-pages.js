@@ -85,7 +85,23 @@
       },
       raw || {}
     );
-    rec.price = Number(rec.price || 0);
+    if (!rec.image && Array.isArray(rec.images) && rec.images.length) {
+      rec.image = rec.images[0];
+    }
+    var variantPrices = Array.isArray(rec.variants)
+      ? rec.variants
+          .map(function (v) {
+            return Number(v && v.price ? v.price : 0);
+          })
+          .filter(function (n) {
+            return n > 0;
+          })
+      : [];
+    if (!rec.price || Number(rec.price) <= 0) {
+      rec.price = variantPrices.length ? Math.min.apply(null, variantPrices) : 0;
+    } else {
+      rec.price = Number(rec.price || 0);
+    }
     return rec;
   }
 
@@ -329,6 +345,16 @@
     try {
       var snap = await fbDb.ref("orders_by_ref").get();
       raw = snap.exists() ? snap.val() : {};
+      try {
+        var byUserSnap = await fbDb.ref("orders").get();
+        var byUser = byUserSnap.exists() ? byUserSnap.val() : {};
+        Object.keys(byUser || {}).forEach(function (uid) {
+          var map = byUser[uid] || {};
+          Object.keys(map || {}).forEach(function (ref) {
+            if (!raw[ref]) raw[ref] = map[ref];
+          });
+        });
+      } catch (mergeErr) {}
     } catch (e) {
       var fallbackRaw = {};
       try {
