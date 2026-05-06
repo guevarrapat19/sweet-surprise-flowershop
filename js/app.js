@@ -570,12 +570,20 @@
     return (err && err.message) || "Authentication failed.";
   }
 
+  function normalizePhPhone(raw) {
+    var digits = String(raw || "").replace(/\D/g, "");
+    if (!digits) return "";
+    if (digits.length === 10 && digits.charAt(0) === "9") return "0" + digits;
+    if (digits.length > 11) return digits.slice(0, 11);
+    return digits;
+  }
+
   function applyCheckoutProfile() {
     var checkoutForm = document.getElementById("checkout-form");
     if (!checkoutForm || !currentUser) return;
     if (currentUser.fullName) checkoutForm.querySelector('[name="name"]').value = currentUser.fullName;
     if (currentUser.email) checkoutForm.querySelector('[name="email"]').value = currentUser.email;
-    if (currentUser.phone) checkoutForm.querySelector('[name="phone"]').value = currentUser.phone;
+    if (currentUser.phone) checkoutForm.querySelector('[name="phone"]').value = normalizePhPhone(currentUser.phone);
   }
 
   function updateAuthUi() {
@@ -625,7 +633,7 @@
     return {
       fullName: String(data.get("full_name") || "").trim(),
       email: String(data.get("email") || "").trim(),
-      phone: String(data.get("phone") || "").replace(/\D/g, "").slice(0, 11),
+      phone: normalizePhPhone(data.get("phone") || ""),
       password: String(data.get("password") || ""),
     };
   }
@@ -1342,7 +1350,7 @@
       var pay = data.get("payment") || "cod";
       var orderRef = makeOrderRef();
 
-      var phoneDigits = String(data.get("phone") || "").replace(/\D/g, "");
+      var phoneDigits = normalizePhPhone(data.get("phone") || "");
       if (!/^09\d{9}$/.test(phoneDigits)) {
         alert("Please enter a valid Philippine mobile number: 09 + 9 digits (numbers only).");
         return;

@@ -948,6 +948,16 @@ button.full {
   gap: 0.65rem;
 }
 
+#admin-products-list {
+  grid-template-columns: 1fr;
+}
+
+@media (min-width: 860px) {
+  #admin-products-list {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
 .order-card {
   border: 1px solid var(--border);
   border-radius: 10px;
@@ -1006,6 +1016,12 @@ button.full {
   margin-top: 0.5rem;
 }
 
+#admin-products-list .order-actions .ghost,
+#admin-products-list .order-actions .primary {
+  padding: 0.28rem 0.55rem;
+  font-size: 0.78rem;
+}
+
 .admin-subhead {
   margin-top: 1rem !important;
   font-size: 1rem;
@@ -1017,9 +1033,9 @@ button.full {
 
 .admin-product-thumb {
   width: 100%;
-  max-width: 220px;
-  height: 130px;
-  object-fit: cover;
+  max-width: 180px;
+  height: 110px;
+  object-fit: contain;
   border-radius: 10px;
   border: 1px solid var(--border);
   margin-bottom: 0.45rem;

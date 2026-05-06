@@ -102,6 +102,9 @@
     } else {
       rec.price = Number(rec.price || 0);
     }
+    rec.hidden = !!rec.hidden;
+    rec.outOfStock = !!rec.outOfStock;
+    rec.isDeleted = !!rec.isDeleted;
     return rec;
   }
 
@@ -767,11 +770,14 @@
       products.sort(function (a, b) {
         return String(a.title || "").localeCompare(String(b.title || ""));
       });
-      if (!products.length) {
+      var visibleProducts = products.filter(function (p) {
+        return !p.hidden;
+      });
+      if (!visibleProducts.length) {
         host.innerHTML = '<p class="muted small">No products yet. Add your first bouquet.</p>';
         return;
       }
-      host.innerHTML = products
+      host.innerHTML = visibleProducts
         .map(function (p) {
           var flags = [];
           if (p.hidden) flags.push("Hidden");
@@ -838,6 +844,16 @@
             form.querySelector('[name="description"]').value = prod.description || "";
             form.querySelector('[name="price"]').value = prod.price || "";
             form.querySelector('[name="image"]').value = prod.image || "";
+            var colors = (((prod.options || {}).colors || []).join(", "));
+            var wraps = (((prod.options || {}).wraps || []).join(", "));
+            var ribbons = (((prod.options || {}).ribbons || []).join(", "));
+            if (form.querySelector('[name="colors"]')) form.querySelector('[name="colors"]').value = colors;
+            if (form.querySelector('[name="wraps"]')) form.querySelector('[name="wraps"]').value = wraps;
+            if (form.querySelector('[name="ribbons"]')) form.querySelector('[name="ribbons"]').value = ribbons;
+            if (preview) {
+              preview.src = productImageSrc(prod.image);
+              preview.hidden = false;
+            }
           });
         });
       }
@@ -906,6 +922,24 @@
       var description = String(data.get("description") || "").trim();
       var price = Number(data.get("price") || 0);
       var image = String(data.get("image") || "").trim();
+      var colors = String(data.get("colors") || "")
+        .split(",")
+        .map(function (v) {
+          return String(v).trim();
+        })
+        .filter(Boolean);
+      var wraps = String(data.get("wraps") || "")
+        .split(",")
+        .map(function (v) {
+          return String(v).trim();
+        })
+        .filter(Boolean);
+      var ribbons = String(data.get("ribbons") || "")
+        .split(",")
+        .map(function (v) {
+          return String(v).trim();
+        })
+        .filter(Boolean);
       if (!title || !description || !price || !image) {
         notify("All product fields are required.");
         return;
@@ -918,6 +952,11 @@
         image: image,
         images: [image],
         variants: [{ id: "std", label: "Standard", price: price, short: "Standard" }],
+        options: {
+          colors: colors,
+          wraps: wraps,
+          ribbons: ribbons,
+        },
       };
       payload.variants[0].label = "Standard — " + formatPHP(price);
       try {
