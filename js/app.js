@@ -380,6 +380,19 @@
     setCart(lines);
   }
 
+  function removeCartLine(productId, variantId, color, wrap, ribbon) {
+    var lines = getCart().filter(function (l) {
+      return !(
+        l.productId === productId &&
+        l.variantId === variantId &&
+        (l.color || "") === (color || "") &&
+        (l.wrap || "") === (wrap || "") &&
+        (l.ribbon || "") === (ribbon || "")
+      );
+    });
+    setCart(lines);
+  }
+
   function clearCart() {
     setCart([]);
   }
@@ -1205,9 +1218,18 @@
       qtyRow.appendChild(num);
       qtyRow.appendChild(plus);
 
+      var removeBtn = document.createElement("button");
+      removeBtn.type = "button";
+      removeBtn.className = "ghost";
+      removeBtn.textContent = "Remove";
+      removeBtn.addEventListener("click", function () {
+        removeCartLine(l.productId, l.variantId, l.color, l.wrap, l.ribbon);
+      });
+
       mid.appendChild(h4);
       mid.appendChild(v);
       mid.appendChild(qtyRow);
+      mid.appendChild(removeBtn);
 
       var price = document.createElement("div");
       price.className = "line-price";

@@ -605,6 +605,13 @@ button.full {
   line-height: 1;
 }
 
+.cart-line button.ghost {
+  margin-top: 0.4rem;
+  padding: 0.35rem 0.6rem;
+  font-size: 0.8rem;
+  justify-self: start;
+}
+
 .line-price {
   font-weight: 600;
 }
