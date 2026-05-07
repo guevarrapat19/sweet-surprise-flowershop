@@ -283,8 +283,28 @@
             if (!targetUid && String(p.email || "").toLowerCase() === email) targetUid = puid;
           });
           if (!targetUid) {
-            var newRef = fbDb.ref("profiles").push();
-            targetUid = newRef.key;
+            // Create a rider auth account with default password without logging out admin.
+            try {
+              var appName = "ssf-admin-create";
+              var createApp = null;
+              try {
+                createApp = firebase.app(appName);
+              } catch (eApp) {
+                createApp = firebase.initializeApp(FIREBASE_CONFIG, appName);
+              }
+              var createAuth = createApp.auth();
+              var cred = await createAuth.createUserWithEmailAndPassword(email, "rider123");
+              targetUid = cred.user && cred.user.uid ? cred.user.uid : null;
+              await createAuth.signOut();
+            } catch (eCreate) {
+              var code = eCreate && eCreate.code ? String(eCreate.code) : "";
+              if (code === "auth/email-already-in-use") {
+                notify("This email already exists. Ask the rider to login once, then try Add Rider again.");
+              } else {
+                notify("Failed to create rider login: " + (eCreate && eCreate.message ? eCreate.message : "Unknown error"));
+              }
+              return;
+            }
           }
           await fbDb.ref("profiles/" + targetUid).update({
             uid: targetUid,
@@ -295,7 +315,7 @@
             active: true,
             updatedAt: new Date().toISOString(),
           });
-          notify("Rider saved.");
+          notify("Rider saved. Default password: rider123");
           form.reset();
           loadRiderAdminPanel();
           loadAdminOrders();
