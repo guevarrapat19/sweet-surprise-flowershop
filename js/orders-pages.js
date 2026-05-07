@@ -148,6 +148,7 @@
       }, 0);
     }
     var riderLine = o.riderName ? " • Rider: " + o.riderName : "";
+    var customerConfirmLine = o.receivedByCustomerAt ? " • Customer confirmed received" : "";
     return (
       '<article class="order-card">' +
       '<div class="order-card-top"><strong>' +
@@ -165,6 +166,7 @@
       " • Total: " +
       formatPHP(computedTotal || 0) +
       riderLine +
+      customerConfirmLine +
       "</p>" +
       "</article>"
     );
@@ -296,6 +298,7 @@
           notify("Rider saved.");
           form.reset();
           loadRiderAdminPanel();
+          loadAdminOrders();
         } catch (e) {
           notify("Failed to add rider: " + (e && e.message ? e.message : "Unknown error"));
         }
@@ -422,7 +425,7 @@
             "</article>",
             '<div class="order-actions"><button class="ghost js-received" data-ref="' +
               o.orderRef +
-              '">Order received</button></div></article>'
+              '">Confirm parcel received</button></div></article>'
           )
         );
       }
@@ -436,8 +439,11 @@
           return x.orderRef === ref;
         });
         if (!o) return;
-        await updateOrderStatus(o, ORDER_STATUSES.RECEIVED_BY_CUSTOMER, { receivedByCustomerAt: new Date().toISOString() });
-        notify("Order marked as received.");
+        await updateOrderStatus(o, ORDER_STATUSES.RECEIVED_BY_CUSTOMER, {
+          receivedByCustomerAt: new Date().toISOString(),
+          customerDeliveryConfirmed: true,
+        });
+        notify("Delivery confirmed. Admin will see your confirmation.");
         loadUserOrders();
       });
     });
