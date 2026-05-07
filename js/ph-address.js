@@ -329,6 +329,54 @@
       refreshTotals();
     }
 
-    return { reset: checkoutAddressReset, refresh: refreshTotals, getTotals: getTotals };
+    function waitForOption(sel, value, timeoutMs) {
+      return new Promise(function (resolve, reject) {
+        var start = Date.now();
+        var t = setInterval(function () {
+          var found = false;
+          for (var i = 0; i < sel.options.length; i++) {
+            if (sel.options[i].value === value) {
+              found = true;
+              break;
+            }
+          }
+          if (found) {
+            clearInterval(t);
+            resolve(true);
+            return;
+          }
+          if (Date.now() - start > (timeoutMs || 6000)) {
+            clearInterval(t);
+            reject(new Error("Option not found"));
+          }
+        }, 120);
+      });
+    }
+
+    async function setAddress(addr) {
+      if (!addr) return;
+      if (addr.regionCode) {
+        regionSel.value = addr.regionCode;
+        onRegionChange();
+        await waitForOption(citySel, addr.cityCode || "", 6000).catch(function () {});
+      }
+      if (addr.provinceCode && addr.regionCode !== ncr) {
+        await waitForOption(provinceSel, addr.provinceCode, 6000).catch(function () {});
+        provinceSel.value = addr.provinceCode;
+        onProvinceChange();
+      }
+      if (addr.cityCode) {
+        await waitForOption(citySel, addr.cityCode, 6000).catch(function () {});
+        citySel.value = addr.cityCode;
+        onCityChange();
+      }
+      if (addr.barangayCode) {
+        await waitForOption(brgySel, addr.barangayCode, 6000).catch(function () {});
+        brgySel.value = addr.barangayCode;
+      }
+      refreshTotals();
+    }
+
+    return { reset: checkoutAddressReset, refresh: refreshTotals, getTotals: getTotals, setAddress: setAddress };
   };
 })(typeof window !== "undefined" ? window : globalThis);

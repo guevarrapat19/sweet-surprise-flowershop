@@ -22,7 +22,7 @@
       ".read": "auth != null",
       "$orderRef": {
         ".read": "auth != null",
-        ".write": "auth != null && (auth.token.email === 'mianongalilee@gmail.com' || auth.token.email === 'almarionestine@gmail.com' || auth.token.email === 'rider@sweetsurprise.com' || auth.token.email === 'rainierdelossantos@gmail.com' || auth.token.email === 'rainierdelossantos4@gmail.com' || auth.token.email === 'jefferytangcuangco@gmail.com')"
+        ".write": "auth != null && (auth.token.email === 'mianongalilee@gmail.com' || auth.token.email === 'almarionestine@gmail.com' || auth.token.email === 'rider@sweetsurprise.com' || auth.token.email === 'rainierdelossantos@gmail.com' || auth.token.email === 'rainierdelossantos4@gmail.com' || auth.token.email === 'jefferytangcuangco@gmail.com' || (auth.uid === data.child('account/uid').val() && newData.child('status').val() === 'received_by_customer'))"
       }
     },
     "products": {

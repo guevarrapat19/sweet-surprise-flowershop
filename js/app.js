@@ -599,6 +599,36 @@
     if (currentUser.fullName) checkoutForm.querySelector('[name="name"]').value = currentUser.fullName;
     if (currentUser.email) checkoutForm.querySelector('[name="email"]').value = currentUser.email;
     if (currentUser.phone) checkoutForm.querySelector('[name="phone"]').value = normalizePhPhone(currentUser.phone);
+    if (currentUser.lastDeliveryAddress) {
+      var streetEl = checkoutForm.querySelector("#addr-street");
+      if (streetEl && currentUser.lastDeliveryAddress.street) streetEl.value = currentUser.lastDeliveryAddress.street;
+    }
+  }
+
+  function bindSavedAddressToggle() {
+    var checkoutForm = document.getElementById("checkout-form");
+    if (!checkoutForm) return;
+    var row = document.getElementById("use-saved-address-row");
+    var cb = document.getElementById("use-saved-address");
+    if (!row || !cb) return;
+    if (cb._ssfBound) return;
+    cb._ssfBound = true;
+
+    cb.addEventListener("change", function () {
+      if (!checkoutAddrCtl) return;
+      var streetEl = checkoutForm.querySelector("#addr-street");
+      if (cb.checked) {
+        if (currentUser && currentUser.lastDeliveryAddress && checkoutAddrCtl.setAddress) {
+          checkoutAddrCtl.setAddress(currentUser.lastDeliveryAddress).catch(function () {});
+        }
+        if (currentUser && currentUser.lastDeliveryAddress && streetEl && currentUser.lastDeliveryAddress.street) {
+          streetEl.value = currentUser.lastDeliveryAddress.street;
+        }
+      } else {
+        if (checkoutAddrCtl.reset) checkoutAddrCtl.reset();
+        if (streetEl) streetEl.value = "";
+      }
+    });
   }
 
   function updateAuthUi() {
@@ -752,6 +782,7 @@
         email: cred.user.email || pack.email,
         phone: profile.phone || "",
         role: profile.role || getRoleFromEmail(cred.user.email || pack.email),
+        lastDeliveryAddress: profile.lastDeliveryAddress || null,
       };
     } else {
       currentUser = readLocalAuth();
@@ -1271,6 +1302,16 @@
     closeCart();
     applyCheckoutProfile();
     if (checkoutAddrCtl && checkoutAddrCtl.refresh) checkoutAddrCtl.refresh();
+    bindSavedAddressToggle();
+    var row = document.getElementById("use-saved-address-row");
+    var cb = document.getElementById("use-saved-address");
+    if (row && cb) {
+      row.hidden = !(currentUser && currentUser.lastDeliveryAddress);
+      cb.checked = !!(currentUser && currentUser.lastDeliveryAddress);
+    }
+    if (checkoutAddrCtl && checkoutAddrCtl.setAddress && currentUser && currentUser.lastDeliveryAddress) {
+      checkoutAddrCtl.setAddress(currentUser.lastDeliveryAddress).catch(function () {});
+    }
   }
 
   function closeCheckout() {
@@ -1463,8 +1504,11 @@
         deliveryAddress: {
           regionCode: selRegion ? selRegion.value : "",
           region: selectLabel(selRegion),
+          provinceCode: selProv ? selProv.value : "",
           province: provinceLine,
+          cityCode: selCity ? selCity.value : "",
           city: selectLabel(selCity),
+          barangayCode: selBrgy ? selBrgy.value : "",
           barangay: selectLabel(selBrgy),
           street: (data.get("addr_street") || "").trim(),
         },
@@ -1494,6 +1538,8 @@
         try {
           await fbDb.ref("orders/" + currentUser.uid + "/" + orderRef).set(snapshot);
           await fbDb.ref("orders_by_ref/" + orderRef).set(snapshot);
+          await fbDb.ref("profiles/" + currentUser.uid + "/lastDeliveryAddress").set(snapshot.deliveryAddress);
+          currentUser.lastDeliveryAddress = snapshot.deliveryAddress;
         } catch (e) {
           console.error("[Order save failed]", e);
           notify("error", "Order save failed: " + (e && e.message ? e.message : e));

@@ -386,9 +386,14 @@
     var nextHistory = Array.isArray(order.statusHistory) ? order.statusHistory.slice() : [];
     nextHistory.push({ status: nextStatus, at: new Date().toISOString() });
     patch.statusHistory = nextHistory;
-    await fbDb.ref("orders_by_ref/" + order.orderRef).update(patch);
     if (order.account && order.account.uid) {
       await fbDb.ref("orders/" + order.account.uid + "/" + order.orderRef).update(patch);
+    }
+    try {
+      await fbDb.ref("orders_by_ref/" + order.orderRef).update(patch);
+    } catch (e) {
+      // If rules block some roles from writing, keep user-side update and show message.
+      notify("Status saved on your order. Global order index update may require admin rules publish.");
     }
   }
 
