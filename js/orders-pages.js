@@ -261,30 +261,38 @@
       form.addEventListener("submit", async function (ev) {
         ev.preventDefault();
         var data = new FormData(form);
-        var uid = String(data.get("uid") || "").trim();
         var fullName = String(data.get("fullName") || "").trim();
         var email = String(data.get("email") || "").trim().toLowerCase();
         var phone = normalizePhPhone(data.get("phone") || "");
-        if (!uid || !fullName || !email) {
-          notify("UID, full name, and email are required.");
+        if (!fullName || !email) {
+          notify("Full name and email are required.");
           return;
         }
         if (phone && !/^09\d{9}$/.test(phone)) {
-          notify("Rider phone must be 11 digits and start with 09.");
+          notify("Rider phone must be valid PH number (09xxxxxxxxx or +639xxxxxxxxx).");
           return;
         }
         try {
-          await fbDb
-            .ref("profiles/" + uid)
-            .update({
-              uid: uid,
-              fullName: fullName,
-              email: email,
-              phone: phone,
-              role: "rider",
-              active: true,
-              updatedAt: new Date().toISOString(),
-            });
+          var profilesSnap = await fbDb.ref("profiles").get();
+          var profiles = profilesSnap.exists() ? profilesSnap.val() : {};
+          var targetUid = null;
+          Object.keys(profiles || {}).forEach(function (puid) {
+            var p = profiles[puid] || {};
+            if (!targetUid && String(p.email || "").toLowerCase() === email) targetUid = puid;
+          });
+          if (!targetUid) {
+            var newRef = fbDb.ref("profiles").push();
+            targetUid = newRef.key;
+          }
+          await fbDb.ref("profiles/" + targetUid).update({
+            uid: targetUid,
+            fullName: fullName,
+            email: email,
+            phone: phone,
+            role: "rider",
+            active: true,
+            updatedAt: new Date().toISOString(),
+          });
           notify("Rider saved.");
           form.reset();
           loadRiderAdminPanel();
@@ -604,7 +612,11 @@
         Object.keys(byUser || {}).forEach(function (uid) {
           var map = byUser[uid] || {};
           Object.keys(map || {}).forEach(function (ref) {
-            if (!raw[ref]) raw[ref] = map[ref];
+            if (!raw[ref]) {
+              raw[ref] = map[ref];
+            } else {
+              raw[ref] = mergeOrderRecord(raw[ref], map[ref]);
+            }
           });
         });
       } catch (mergeErr) {}
@@ -683,7 +695,10 @@
     var adminLink = document.getElementById("nav-admin-link");
     var riderLink = document.getElementById("nav-rider-link");
     var role = currentUser ? currentUser.role || roleByEmail(currentUser.email) : "user";
-    if (emailEl && currentUser) emailEl.textContent = currentUser.email || "Logged in";
+    if (emailEl && currentUser) {
+      var roleLabel = role === "admin" ? "Admin" : role === "rider" ? "Rider" : "Customer";
+      emailEl.textContent = roleLabel + ": " + (currentUser.email || "Logged in");
+    }
     if (ordersLink) {
       ordersLink.hidden = !currentUser;
       ordersLink.href = role === "admin" ? "admin-orders.html" : role === "rider" ? "rider-orders.html" : "user-orders.html";

@@ -48,7 +48,10 @@
     var adminLink = document.getElementById("nav-admin-link");
     var riderLink = document.getElementById("nav-rider-link");
     var role = currentUser ? currentUser.role || roleByEmail(currentUser.email) : "user";
-    if (emailEl && currentUser) emailEl.textContent = currentUser.email || "Logged in";
+    if (emailEl && currentUser) {
+      var roleLabel = role === "admin" ? "Admin" : role === "rider" ? "Rider" : "Customer";
+      emailEl.textContent = roleLabel + ": " + (currentUser.email || "Logged in");
+    }
     if (ordersLink) {
       ordersLink.hidden = !currentUser;
       ordersLink.href = role === "admin" ? "admin-orders.html" : role === "rider" ? "rider-orders.html" : "user-orders.html";

@@ -597,7 +597,8 @@
     var adminLink = document.getElementById("nav-admin-link");
     var riderLink = document.getElementById("nav-rider-link");
     var role = logged && currentUser ? currentUser.role : "user";
-    els.status.textContent = logged ? currentUser.email : "Guest";
+    var roleLabel = role === "admin" ? "Admin" : role === "rider" ? "Rider" : "Customer";
+    els.status.textContent = logged ? roleLabel + ": " + currentUser.email : "Guest";
     if (els.openBtn) els.openBtn.hidden = logged;
     if (els.logoutBtn) els.logoutBtn.hidden = !logged;
     if (els.adminPill) els.adminPill.hidden = !(logged && currentUser.role === "admin");
