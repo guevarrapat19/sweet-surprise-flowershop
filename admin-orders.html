@@ -151,15 +151,25 @@
           <div class="dashboard-card">
             <h3>Add Rider</h3>
             <form id="rider-admin-form" class="dashboard-form">
-              <p class="muted small">
-                Enter the email of an existing account to upgrade them to a rider. Ask them to register first if they don’t have an account yet.
-              </p>
+              <p class="muted small">Fill rider details then save to Firebase profiles.</p>
+              <label>
+                Rider UID
+                <input name="uid" type="text" required />
+              </label>
+              <label>
+                Rider full name
+                <input name="fullName" type="text" required />
+              </label>
               <label>
                 Rider email
                 <input name="email" type="email" required />
               </label>
+              <label>
+                Rider phone (11 digits)
+                <input name="phone" type="tel" inputmode="numeric" pattern="\d*" maxlength="11" data-numeric-only="true" />
+              </label>
               <div class="checkout-actions">
-                <button type="submit" class="primary">Add / Upgrade Rider</button>
+                <button type="submit" class="primary">Add Rider</button>
               </div>
             </form>
           </div>

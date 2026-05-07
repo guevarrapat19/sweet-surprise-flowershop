@@ -573,8 +573,10 @@
   function normalizePhPhone(raw) {
     var digits = String(raw || "").replace(/\D/g, "");
     if (!digits) return "";
+    if (digits.length === 12 && digits.indexOf("639") === 0) return "0" + digits.slice(2);
+    if (digits.length === 11 && digits.indexOf("09") === 0) return digits;
     if (digits.length === 10 && digits.charAt(0) === "9") return "0" + digits;
-    if (digits.length > 11) return digits.slice(0, 11);
+    if (digits.length > 11) return digits.slice(digits.length - 11);
     return digits;
   }
 

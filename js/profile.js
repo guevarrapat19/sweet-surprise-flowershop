@@ -22,6 +22,16 @@
     el.hidden = !msg;
   }
 
+  function normalizePhPhone(raw) {
+    var digits = String(raw || "").replace(/\D/g, "");
+    if (!digits) return "";
+    if (digits.length === 12 && digits.indexOf("639") === 0) return "0" + digits.slice(2);
+    if (digits.length === 11 && digits.indexOf("09") === 0) return digits;
+    if (digits.length === 10 && digits.charAt(0) === "9") return "0" + digits;
+    if (digits.length > 11) return digits.slice(digits.length - 11);
+    return digits;
+  }
+
   function initFirebase() {
     if (!window.firebase || !FIREBASE_CONFIG || !FIREBASE_CONFIG.apiKey) return false;
     if (!firebase.apps.length) firebase.initializeApp(FIREBASE_CONFIG);
@@ -42,6 +52,7 @@
     if (ordersLink) {
       ordersLink.hidden = !currentUser;
       ordersLink.href = role === "admin" ? "admin-orders.html" : role === "rider" ? "rider-orders.html" : "user-orders.html";
+      ordersLink.textContent = role === "admin" ? "Dashboard" : "Orders";
     }
     if (profileLink) profileLink.hidden = !currentUser;
     if (adminLink) adminLink.hidden = true;
@@ -69,7 +80,7 @@
     if (!form || !currentUser) return;
     form.querySelector('[name="fullName"]').value = currentUser.fullName || "";
     form.querySelector('[name="email"]').value = currentUser.email || "";
-    form.querySelector('[name="phone"]').value = currentUser.phone || "";
+    form.querySelector('[name="phone"]').value = normalizePhPhone(currentUser.phone || "");
   }
 
   function initProfileSave() {
@@ -80,13 +91,13 @@
       if (!currentUser) return;
       var data = new FormData(form);
       var fullName = String(data.get("fullName") || "").trim();
-      var phone = String(data.get("phone") || "").replace(/\D/g, "").slice(0, 11);
+      var phone = normalizePhPhone(data.get("phone") || "");
       if (!fullName) {
         notify("Full name is required.");
         return;
       }
       if (phone && !/^09\d{9}$/.test(phone)) {
-        notify("Mobile must be 11 digits and start with 09.");
+        notify("Mobile must be valid PH number (09xxxxxxxxx or +639xxxxxxxxx).");
         return;
       }
       await fbDb.ref("profiles/" + currentUser.uid).update({

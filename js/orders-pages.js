@@ -116,6 +116,16 @@
     return "assets/products/" + s;
   }
 
+  function normalizePhPhone(raw) {
+    var digits = String(raw || "").replace(/\D/g, "");
+    if (!digits) return "";
+    if (digits.length === 12 && digits.indexOf("639") === 0) return "0" + digits.slice(2);
+    if (digits.length === 11 && digits.indexOf("09") === 0) return digits;
+    if (digits.length === 10 && digits.charAt(0) === "9") return "0" + digits;
+    if (digits.length > 11) digits = digits.slice(digits.length - 11);
+    return digits;
+  }
+
   function slugify(text) {
     return String(text || "")
       .toLowerCase()
@@ -126,13 +136,14 @@
   }
 
   function rowHtml(o) {
+    var ref = o.orderRef || "N/A";
     var customerName = (o.customer && o.customer.name) || "N/A";
     var customerEmail = (o.customer && o.customer.email) || "";
     var riderLine = o.riderName ? " • Rider: " + o.riderName : "";
     return (
       '<article class="order-card">' +
       '<div class="order-card-top"><strong>' +
-      o.orderRef +
+      ref +
       "</strong><span class='status-pill " +
       statusClass(o.status) +
       "'>" +
@@ -204,29 +215,32 @@
       form.addEventListener("submit", async function (ev) {
         ev.preventDefault();
         var data = new FormData(form);
+        var uid = String(data.get("uid") || "").trim();
+        var fullName = String(data.get("fullName") || "").trim();
         var email = String(data.get("email") || "").trim().toLowerCase();
-        if (!email) {
-          notify("Rider email is required.");
+        var phone = normalizePhPhone(data.get("phone") || "");
+        if (!uid || !fullName || !email) {
+          notify("UID, full name, and email are required.");
+          return;
+        }
+        if (phone && !/^09\d{9}$/.test(phone)) {
+          notify("Rider phone must be 11 digits and start with 09.");
           return;
         }
         try {
-          var snapAll = await fbDb.ref("profiles").get();
-          var rawAll = snapAll.exists() ? snapAll.val() : {};
-          var targetUid = null;
-          Object.keys(rawAll || {}).forEach(function (uid) {
-            var p = rawAll[uid] || {};
-            if (!targetUid && String(p.email || "").toLowerCase() === email) {
-              targetUid = uid;
-            }
-          });
-          if (!targetUid) {
-            notify("No account with that email yet. Ask the rider to register first, then try again.");
-            return;
-          }
           await fbDb
-            .ref("profiles/" + targetUid)
-            .update({ role: "rider", active: true, updatedAt: new Date().toISOString() });
-          notify("Rider role added/updated.");
+            .ref("profiles/" + uid)
+            .update({
+              uid: uid,
+              fullName: fullName,
+              email: email,
+              phone: phone,
+              role: "rider",
+              active: true,
+              updatedAt: new Date().toISOString(),
+            });
+          notify("Rider saved.");
+          form.reset();
           loadRiderAdminPanel();
         } catch (e) {
           notify("Failed to add rider: " + (e && e.message ? e.message : "Unknown error"));
@@ -410,9 +424,15 @@
         return;
       }
     }
-    var orders = Object.keys(raw || {}).map(function (k) {
-      return raw[k];
-    });
+    var orders = Object.keys(raw || {})
+      .map(function (k) {
+        var o = raw[k] || {};
+        if (!o.orderRef) o.orderRef = k;
+        return o;
+      })
+      .filter(function (o) {
+        return o && o.orderRef && o.orderRef !== "undefined";
+      });
     orders.sort(function (a, b) {
       return new Date(b.placedAt || 0).getTime() - new Date(a.placedAt || 0).getTime();
     });
@@ -424,16 +444,16 @@
         actions +=
           '<button class="primary js-status" data-ref="' +
           o.orderRef +
-          '" data-next="approved" data-payment-received="true">Payment received</button>';
+          '" data-next="approved" data-payment-received="true">Confirm payment</button>';
       }
       if (o.status === ORDER_STATUSES.PENDING && o.payment !== "gcash") {
-        actions += '<button class="primary js-status" data-ref="' + o.orderRef + '" data-next="approved">Approve</button>';
+        actions += '<button class="primary js-status" data-ref="' + o.orderRef + '" data-next="approved">Confirm order</button>';
       }
       if (o.status === ORDER_STATUSES.AWAITING_PAYMENT_REVIEW) {
         actions +=
           '<button class="primary js-status" data-ref="' +
           o.orderRef +
-          '" data-next="approved" data-payment-received="true">Payment received</button>';
+          '" data-next="approved" data-payment-received="true">Confirm payment</button>';
         actions += '<button class="ghost js-status" data-ref="' + o.orderRef + '" data-next="cancelled">Cancel order</button>';
       }
       if (o.status === ORDER_STATUSES.PENDING) {
@@ -446,7 +466,7 @@
           })
           .join("");
         actions +=
-          '<select class="js-rider" data-ref="' + o.orderRef + '"><option value="">Assign rider...</option>' + opts + "</select>";
+          '<select class="js-rider" data-ref="' + o.orderRef + '"><option value="">Select rider...</option>' + opts + '</select><button class="ghost js-rider-confirm" data-ref="' + o.orderRef + '" disabled>Confirm rider</button>';
       }
       if (o.status === ORDER_STATUSES.RECEIVED_BY_CUSTOMER || o.status === ORDER_STATUSES.PAID_DELIVERY_SUCCESS) {
         actions += '<button class="ghost js-status" data-ref="' + o.orderRef + '" data-next="completed">Close order</button>';
@@ -471,9 +491,20 @@
     });
 
     host.querySelectorAll(".js-rider").forEach(function (sel) {
-      sel.addEventListener("change", async function () {
-        if (!sel.value) return;
+      sel.addEventListener("change", function () {
         var ref = sel.getAttribute("data-ref");
+        var btn = host.querySelector('.js-rider-confirm[data-ref="' + ref + '"]');
+        if (btn) btn.disabled = !sel.value;
+      });
+    });
+    host.querySelectorAll(".js-rider-confirm").forEach(function (btn) {
+      btn.addEventListener("click", async function () {
+        var ref = btn.getAttribute("data-ref");
+        var sel = host.querySelector('.js-rider[data-ref="' + ref + '"]');
+        if (!sel || !sel.value) {
+          notify("Please select a rider first.");
+          return;
+        }
         var rider = riders.find(function (r) {
           return r.uid === sel.value;
         });
@@ -513,17 +544,36 @@
     try {
       var snap = await fbDb.ref("orders_by_ref").get();
       raw = snap.exists() ? snap.val() : {};
+      try {
+        var byUserSnap = await fbDb.ref("orders").get();
+        var byUser = byUserSnap.exists() ? byUserSnap.val() : {};
+        Object.keys(byUser || {}).forEach(function (uid) {
+          var map = byUser[uid] || {};
+          Object.keys(map || {}).forEach(function (ref) {
+            if (!raw[ref]) raw[ref] = map[ref];
+          });
+        });
+      } catch (mergeErr) {}
     } catch (e) {
       notify("Failed to load rider orders: " + (e && e.message ? e.message : "Unknown error"));
       return;
     }
     var orders = Object.keys(raw || {})
       .map(function (k) {
-        return raw[k];
+        var o = raw[k] || {};
+        if (!o.orderRef) o.orderRef = k;
+        return o;
       })
       .filter(function (o) {
-        return o && o.riderUid === currentUser.uid;
+        if (!o) return false;
+        var riderByUid = o.riderUid && o.riderUid === currentUser.uid;
+        var riderByEmail =
+          o.riderEmail && String(o.riderEmail).toLowerCase() === String(currentUser.email || "").toLowerCase();
+        return riderByUid || riderByEmail;
       });
+    orders.sort(function (a, b) {
+      return new Date(b.placedAt || 0).getTime() - new Date(a.placedAt || 0).getTime();
+    });
 
     renderOrders(host, orders, function (o) {
       var actions = "";
