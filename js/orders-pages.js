@@ -137,8 +137,16 @@
 
   function rowHtml(o) {
     var ref = o.orderRef || "N/A";
-    var customerName = (o.customer && o.customer.name) || "N/A";
+    var customerName = (o.customer && o.customer.name) || (o.account && o.account.email) || "N/A";
     var customerEmail = (o.customer && o.customer.email) || "";
+    var computedTotal = Number(o.total || 0);
+    if ((!computedTotal || computedTotal <= 0) && Array.isArray(o.lines) && o.lines.length) {
+      computedTotal = o.lines.reduce(function (sum, line) {
+        var qty = Number((line && line.qty) || 0);
+        var unit = Number((line && line.unitPrice) || 0);
+        return sum + qty * unit;
+      }, 0);
+    }
     var riderLine = o.riderName ? " • Rider: " + o.riderName : "";
     return (
       '<article class="order-card">' +
@@ -155,11 +163,49 @@
       " • Payment: " +
       String(o.payment || "cod").toUpperCase() +
       " • Total: " +
-      formatPHP(o.total || 0) +
+      formatPHP(computedTotal || 0) +
       riderLine +
       "</p>" +
       "</article>"
     );
+  }
+
+  function orderCompletenessScore(o) {
+    if (!o) return 0;
+    var score = 0;
+    if (o.orderRef) score += 2;
+    if (o.customer && (o.customer.name || o.customer.email)) score += 3;
+    if (Array.isArray(o.lines) && o.lines.length) score += 3;
+    if (Number(o.total || 0) > 0) score += 3;
+    if (o.account && o.account.uid) score += 2;
+    if (o.deliveryAddress && o.deliveryAddress.street) score += 1;
+    if (o.placedAt) score += 1;
+    return score;
+  }
+
+  function mergeOrderRecord(base, incoming) {
+    var a = base || {};
+    var b = incoming || {};
+    var merged = Object.assign({}, a, b);
+
+    // Keep richer nested blocks when one source is partial.
+    var aCustomerScore = orderCompletenessScore({ customer: a.customer }) + (a.customer && (a.customer.name || a.customer.email) ? 2 : 0);
+    var bCustomerScore = orderCompletenessScore({ customer: b.customer }) + (b.customer && (b.customer.name || b.customer.email) ? 2 : 0);
+    merged.customer = bCustomerScore >= aCustomerScore ? b.customer || a.customer : a.customer || b.customer;
+
+    var aLines = Array.isArray(a.lines) ? a.lines : [];
+    var bLines = Array.isArray(b.lines) ? b.lines : [];
+    merged.lines = bLines.length >= aLines.length ? (bLines.length ? bLines : aLines) : aLines;
+
+    var aTotal = Number(a.total || 0);
+    var bTotal = Number(b.total || 0);
+    merged.total = bTotal > 0 ? bTotal : aTotal;
+
+    var aAccount = a.account || {};
+    var bAccount = b.account || {};
+    merged.account = bAccount.uid || bAccount.email ? bAccount : aAccount;
+
+    return merged;
   }
 
   async function deleteOrderEverywhere(order) {
@@ -402,7 +448,11 @@
         Object.keys(byUser || {}).forEach(function (uid) {
           var map = byUser[uid] || {};
           Object.keys(map || {}).forEach(function (ref) {
-            if (!raw[ref]) raw[ref] = map[ref];
+            if (!raw[ref]) {
+              raw[ref] = map[ref];
+            } else {
+              raw[ref] = mergeOrderRecord(raw[ref], map[ref]);
+            }
           });
         });
       } catch (mergeErr) {}
@@ -414,7 +464,11 @@
         Object.keys(byUser || {}).forEach(function (uid) {
           var map = byUser[uid] || {};
           Object.keys(map || {}).forEach(function (ref) {
-            if (!fallbackRaw[ref]) fallbackRaw[ref] = map[ref];
+            if (!fallbackRaw[ref]) {
+              fallbackRaw[ref] = map[ref];
+            } else {
+              fallbackRaw[ref] = mergeOrderRecord(fallbackRaw[ref], map[ref]);
+            }
           });
         });
         raw = fallbackRaw;
