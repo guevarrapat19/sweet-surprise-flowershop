@@ -761,28 +761,36 @@
     var els = getAuthFormEls();
     if (!els.openBtn) return;
 
-    els.openBtn.addEventListener("click", function () {
-      openAuthDialog(firebaseReady ? "Please login to continue." : "Please login to continue.");
-    });
-    els.cancelBtn.addEventListener("click", closeAuthDialog);
-    els.backdrop.addEventListener("click", closeAuthDialog);
-    els.logoutBtn.addEventListener("click", function () {
-      logoutUser().catch(function (e) {
-        alert("Logout failed: " + (e && e.message ? e.message : e));
+    if (els.openBtn) {
+      els.openBtn.addEventListener("click", function () {
+        openAuthDialog(firebaseReady ? "Please login to continue." : "Please login to continue.");
       });
-    });
-    els.loginBtn.addEventListener("click", function () {
-      loginUser().catch(function (e) {
-        setAuthMessage(formatAuthError(e), true);
-        notify("error", formatAuthError(e));
+    }
+    if (els.cancelBtn) els.cancelBtn.addEventListener("click", closeAuthDialog);
+    if (els.backdrop) els.backdrop.addEventListener("click", closeAuthDialog);
+    if (els.logoutBtn) {
+      els.logoutBtn.addEventListener("click", function () {
+        logoutUser().catch(function (e) {
+          notify("error", "Logout failed: " + (e && e.message ? e.message : e));
+        });
       });
-    });
-    els.registerBtn.addEventListener("click", function () {
-      registerUser().catch(function (e) {
-        setAuthMessage(formatAuthError(e), true);
-        notify("error", formatAuthError(e));
+    }
+    if (els.loginBtn) {
+      els.loginBtn.addEventListener("click", function () {
+        loginUser().catch(function (e) {
+          setAuthMessage(formatAuthError(e), true);
+          notify("error", formatAuthError(e));
+        });
       });
-    });
+    }
+    if (els.registerBtn) {
+      els.registerBtn.addEventListener("click", function () {
+        registerUser().catch(function (e) {
+          setAuthMessage(formatAuthError(e), true);
+          notify("error", formatAuthError(e));
+        });
+      });
+    }
     if (els.switchBtn) {
       els.switchBtn.addEventListener("click", function () {
         setAuthMode(authMode === "login" ? "register" : "login");
@@ -1359,21 +1367,19 @@
 
       var phoneDigits = normalizePhPhone(data.get("phone") || "");
       if (!/^09\d{9}$/.test(phoneDigits)) {
-        alert("Please enter a valid Philippine mobile number: 09 + 9 digits (numbers only).");
+        notify("error", "Please enter a valid Philippine mobile number: 09 + 9 digits.");
         return;
       }
 
       if (!checkoutAddrCtl) {
-        alert(
-          "Address picker did not load. Check that js/ph-address.js is on the server and refresh the page (needed for Philippine delivery fees)."
-        );
+        notify("error", "Address picker did not load. Refresh page and try again.");
         return;
       }
 
       var feePack = checkoutAddrCtl.getTotals();
 
       if (!feePack.addressComplete) {
-        alert("Please finish your Philippine address: region, province (if applicable), city, barangay, and street/building.");
+        notify("error", "Please finish your address: region, province, city, barangay, and street.");
         return;
       }
 
@@ -1465,7 +1471,7 @@
           await fbDb.ref("orders_by_ref/" + orderRef).set(snapshot);
         } catch (e) {
           console.error("[Order save failed]", e);
-          alert("Order save failed (Firebase permission). Please publish your Realtime Database rules, then try again.\n\n" + (e && e.message ? e.message : e));
+          notify("error", "Order save failed: " + (e && e.message ? e.message : e));
         }
       }
       try {
@@ -1474,9 +1480,7 @@
         localStorage.setItem("ssf-orders-demo", JSON.stringify(prev));
       } catch (e) {}
 
-      if (pay === "gcash") {
-        alert("Payment submitted. Please wait for owner/admin payment confirmation. Updates will appear in your order dashboard.");
-      }
+      if (pay === "gcash") notify("success", "GCash payment submitted. Please wait for admin confirmation.");
 
       var follow = paymentFollowUp(pay, orderRef, grandStr);
       notify("success", "Order placed. " + follow);

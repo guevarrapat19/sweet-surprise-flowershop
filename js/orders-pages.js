@@ -826,6 +826,7 @@
         .join("");
 
       var form = document.getElementById("admin-product-form");
+      var preview = document.getElementById("admin-product-image-preview");
       if (form) {
         host.querySelectorAll(".js-prod-edit").forEach(function (btn) {
           btn.addEventListener("click", function () {
