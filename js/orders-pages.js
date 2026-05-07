@@ -644,16 +644,15 @@
     renderOrders(host, orders, function (o) {
       var actions = "";
       if (o.status === ORDER_STATUSES.RIDER_ASSIGNED) {
-        actions += '<button class="primary js-next" data-ref="' + o.orderRef + '" data-next="out_for_delivery">Out for delivery</button>';
+        actions += '<button class="primary js-next" data-ref="' + o.orderRef + '" data-next="out_for_delivery">Pick up for delivery</button>';
       } else if (o.status === ORDER_STATUSES.OUT_FOR_DELIVERY) {
-        if (o.payment === "cod") {
-          actions +=
-            '<button class="primary js-next" data-ref="' +
-            o.orderRef +
-            '" data-next="paid_delivery_success">Successful transaction (COD)</button>';
-        } else {
-          actions += '<button class="primary js-next" data-ref="' + o.orderRef + '" data-next="delivered">Delivered</button>';
-        }
+        var completeStatus = o.payment === "cod" ? ORDER_STATUSES.PAID_DELIVERY_SUCCESS : ORDER_STATUSES.DELIVERED;
+        actions +=
+          '<button class="primary js-next" data-ref="' +
+          o.orderRef +
+          '" data-next="' +
+          completeStatus +
+          '">Complete delivered</button>';
       }
       return rowHtml(o).replace("</article>", '<div class="order-actions">' + actions + "</div></article>");
     });

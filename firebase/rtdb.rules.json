@@ -10,7 +10,7 @@
       }
     },
     "orders": {
-      ".read": "auth != null && (auth.token.email === 'mianongalilee@gmail.com' || auth.token.email === 'almarionestine@gmail.com')",
+      ".read": "auth != null && (auth.token.email === 'mianongalilee@gmail.com' || auth.token.email === 'almarionestine@gmail.com' || auth.token.email === 'rider@sweetsurprise.com' || auth.token.email === 'rainierdelossantos@gmail.com' || auth.token.email === 'rainierdelossantos4@gmail.com' || auth.token.email === 'jefferytangcuangco@gmail.com')",
       "$uid": {
         ".read": "auth != null && (auth.uid === $uid || auth.token.email === 'mianongalilee@gmail.com' || auth.token.email === 'almarionestine@gmail.com' || auth.token.email === 'rider@sweetsurprise.com' || auth.token.email === 'rainierdelossantos@gmail.com' || auth.token.email === 'rainierdelossantos4@gmail.com' || auth.token.email === 'jefferytangcuangco@gmail.com')",
         "$orderRef": {
