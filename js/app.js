@@ -679,8 +679,15 @@
         email: pack.email,
         phone: pack.phone,
         role: getRoleFromEmail(pack.email),
+        createdAt: new Date().toISOString(),
       };
-      await fbDb.ref("profiles/" + cred.user.uid).set(profile);
+      await cred.user.updateProfile({ displayName: pack.fullName });
+      try {
+        await fbDb.ref("profiles/" + cred.user.uid).set(profile);
+      } catch (e) {
+        setAuthMessage("Profile save failed: " + (e && e.message ? e.message : "Permission denied"), true);
+        throw e;
+      }
       currentUser = profile;
     } else {
       currentUser = {
@@ -1456,7 +1463,10 @@
         try {
           await fbDb.ref("orders/" + currentUser.uid + "/" + orderRef).set(snapshot);
           await fbDb.ref("orders_by_ref/" + orderRef).set(snapshot);
-        } catch (e) {}
+        } catch (e) {
+          console.error("[Order save failed]", e);
+          alert("Order save failed (Firebase permission). Please publish your Realtime Database rules, then try again.\n\n" + (e && e.message ? e.message : e));
+        }
       }
       try {
         var prev = JSON.parse(localStorage.getItem("ssf-orders-demo") || "[]");

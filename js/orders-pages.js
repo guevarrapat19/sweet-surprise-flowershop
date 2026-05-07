@@ -771,7 +771,7 @@
         return String(a.title || "").localeCompare(String(b.title || ""));
       });
       var visibleProducts = products.filter(function (p) {
-        return !p.hidden;
+        return !p.hidden && !!String(p.title || "").trim();
       });
       if (!visibleProducts.length) {
         host.innerHTML = '<p class="muted small">No products yet. Add your first bouquet.</p>';
@@ -794,12 +794,7 @@
             '<div class="order-card-top"><strong>' +
             p.title +
             "</strong></div>" +
-            "<p class='order-meta muted small'>PHP " +
-            Number(p.price || 0) +
-            " • " +
-            (p.image || "no-image.jpg") +
-            flagText +
-            "</p>" +
+            "<p class='order-meta muted small'>PHP " + Number(p.price || 0) + flagText + "</p>" +
             '<div class="order-actions">' +
             '<button class="ghost js-prod-edit" data-id="' +
             p.id +

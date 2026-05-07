@@ -30,9 +30,13 @@
         <nav class="nav" aria-label="Primary">
           <a href="index.html#shop">Shop</a>
           <a href="about.html" aria-current="page">About</a>
-          <a href="user-orders.html">Orders</a>
-          <a href="admin-orders.html">Dashboard</a>
-          <a href="profile.html">Profile</a>
+          <a href="user-orders.html" id="nav-orders-link" hidden>Orders</a>
+          <a href="admin-orders.html" id="nav-admin-link" hidden>Dashboard</a>
+          <a href="rider-orders.html" id="nav-rider-link" hidden>Rider</a>
+          <a href="profile.html" id="nav-profile-link" hidden>Profile</a>
+          <button type="button" class="ghost auth-btn" id="auth-open">Login</button>
+          <button type="button" class="ghost auth-btn" id="auth-logout" hidden>Logout</button>
+          <span class="auth-status small muted" id="auth-status">Guest</span>
           <button type="button" class="cart-toggle" id="cart-toggle" aria-controls="cart-panel" aria-expanded="false">
             Cart
             <span class="cart-count" id="cart-count" aria-live="polite">0</span>
@@ -202,6 +206,21 @@
       <p>© <span id="year"></span> Sweet Surprise Flowershop</p>
     </footer>
 
+    <script>
+      window.SSF_FIREBASE_CONFIG = {
+        apiKey: "AIzaSyAD_IuSJyauYTW6m13UQHreYdeA_ypbx9k",
+        authDomain: "sweet-surprise-website.firebaseapp.com",
+        databaseURL: "https://sweet-surprise-website-default-rtdb.asia-southeast1.firebasedatabase.app",
+        projectId: "sweet-surprise-website",
+        storageBucket: "sweet-surprise-website.firebasestorage.app",
+        messagingSenderId: "189550685416",
+        appId: "1:189550685416:web:6df2d9861bca92ce4aad5d",
+        measurementId: "G-8LL1JE9CPQ"
+      };
+    </script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
     <script src="js/ph-address.js"></script>
     <script src="js/app.js"></script>
   </body>
